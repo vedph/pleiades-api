@@ -1,0 +1,65 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+    <RootNamespace>Pleiades.Tool</RootNamespace>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <Company>Fusi</Company>
+    <Product></Product>
+    <Authors>Daniele Fusi</Authors>
+    <Copyright>by Daniele Fusi</Copyright>
+    <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
+    <Description>Pleiades wrapper API CLI tool</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="appsettings.json" />
+    <None Remove="Assets\Profile.json" />
+    <None Remove="Assets\Spatial.pgsql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Profile.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\Spatial.pgsql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Pleiades.Core\Pleiades.Core.csproj" />
+    <ProjectReference Include="..\Pleiades.Ef.PgSql\Pleiades.Ef.PgSql.csproj" />
+    <ProjectReference Include="..\Pleiades.Ef\Pleiades.Ef.csproj" />
+    <ProjectReference Include="..\Pleiades.Geo\Pleiades.Geo.csproj" />
+    <ProjectReference Include="..\Pleiades.Index\Pleiades.Index.csproj" />
+    <ProjectReference Include="..\Pleiades.Migration\Pleiades.Migration.csproj" />
+    <ProjectReference Include="..\Pleiades.Search\Pleiades.Search.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Embix.PgSql" Version="1.1.0" />
+    <PackageReference Include="Embix.Plugin.Greek" Version="1.1.0" />
+    <PackageReference Include="Fusi.DbManager" Version="1.0.6" />
+    <PackageReference Include="Fusi.DbManager.PgSql" Version="1.0.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="5.0.9">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.CommandLineUtils" Version="1.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="5.0.0" />
+    <PackageReference Include="Npgsql" Version="5.0.7" />
+    <PackageReference Include="Serilog" Version="2.10.0" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="3.0.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+    <PackageReference Include="ShellProgressBar" Version="5.1.0" />
+  </ItemGroup>
+
+</Project>

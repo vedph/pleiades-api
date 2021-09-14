@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Assets\Schema.pgsql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\Schema.pgsql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Pleiades.Ef\Pleiades.Ef.csproj" />
+    <ProjectReference Include="..\Pleiades.Index\Pleiades.Index.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Embix.PgSql" Version="1.1.0" />
+    <PackageReference Include="Embix.Plugin.Greek" Version="1.1.0" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="5.0.7" />
+  </ItemGroup>
+
+</Project>

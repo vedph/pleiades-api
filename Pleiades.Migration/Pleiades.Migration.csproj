@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <Product>Pleiades wrapper API</Product>
+    <Authors>Daniele Fusi</Authors>
+    <Company>Fusi</Company>
+    <Copyright>by Daniele Fusi</Copyright>
+    <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
+    <NeutralLanguage>en-US</NeutralLanguage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Fusi.Tools" Version="1.1.17" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Pleiades.Core\Pleiades.Core.csproj" />
+    <ProjectReference Include="..\Pleiades.Ef\Pleiades.Ef.csproj" />
+  </ItemGroup>
+
+</Project>

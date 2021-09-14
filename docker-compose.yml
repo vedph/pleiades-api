@@ -1,0 +1,40 @@
+version: '3.7'
+
+services:
+  pleiades-pgsql:
+    image: postgis/postgis
+    container_name: pleiades-pgsql
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    ports:
+      - 5432:5432
+    networks:
+      - pleiades-network
+    volumes:
+      # https://hub.docker.com/r/postgis/postgis
+      - /var/db/pgsql:/var/lib/postgresql/data
+      # place bin dumps into this volume for automatic restore
+      - /var/pleiades:/var/pleiades
+
+  pleiades-api:
+    image: vedph2020/pleiades-api:1.0.0
+    ports:
+        # https://stackoverflow.com/questions/48669548/why-does-aspnet-core-start-on-port-80-from-within-docker
+        - 29139:80
+    depends_on:
+        - pleiades-pgsql
+    environment:
+        # for Windows use : as separator, for non Windows use __
+        # (see https://github.com/aspnet/Configuration/issues/469)
+        - CONNECTIONSTRINGS__DEFAULT=User ID=postgres;Password=postgres;Host=localhost;Port=5432;Database=pleiades;
+        # - ALLOWED__ORIGINS__3=http://www.something.com
+        - SEED__INDEXDELAY=50
+        - SERILOG__CONNECTIONSTRING=mongodb://pleiades:27017/{0}-log
+    networks:
+        - pleiades-network
+
+networks:
+  pleiades-network:
+    driver: bridge

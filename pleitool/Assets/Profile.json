@@ -1,0 +1,100 @@
+﻿{
+  "FilterChains": [
+    {
+      "Id": "tag-sep-wsp-std",
+      "Filters": [
+        {
+          "Id": "text-filter.tag"
+        },
+        {
+          "Id": "text-filter.separator",
+          "Options": {
+            "Separators": "/,"
+          }
+        },
+        {
+          "Id": "text-filter.whitespace"
+        },
+        {
+          "Id": "text-filter.standard"
+        }
+      ]
+    },
+    {
+      "Id": "stp",
+      "Filters": [
+        {
+          "Id": "text-filter.stopword"
+        }
+      ]
+    }
+  ],
+  "Tokenizers": [
+    {
+      "Id": "std",
+      "TypeId": "string-tokenizer.standard",
+      "FilterChain": "stp"
+    },
+    {
+      "Id": "nul",
+      "TypeId": "string-tokenizer.null"
+    }
+  ],
+  "TokenMultipliers": [
+    {
+      "Id": "grc-rom",
+      "TypeId": "string-token-multiplier.grc-romanizer",
+      "Options": {
+        "TargetTable": "$GtrTarget7"
+      }
+    }
+  ],
+  "TokenFieldLengths": {
+    "value": 100,
+    "language": 5
+  },
+  "OccurrenceFieldLengths": {},
+  "MetadataFields": [
+    "rank",
+    "year_min",
+    "year_max"
+  ],
+  "Documents": [
+    {
+      "Id": "place",
+      "CountSql": "SELECT COUNT(*) FROM place;",
+      "DataSql": "SELECT title AS plttl, description AS pldsc, details AS pldtl, review_state_id AS m_state, title AS m_raw_title, id AS m_target_id FROM place ORDER BY place.id LIMIT {1} OFFSET {0};",
+      "TextFilterChains": {
+        "*": "tag-sep-wsp-std"
+      },
+      "Tokenizers": {
+        "*": "std"
+      }
+    },
+    {
+      "Id": "location",
+      "CountSql": "SELECT COUNT(*) FROM location;",
+      "DataSql": "SELECT title AS lcttl, certainty_id AS m_certainty, review_state_id AS m_state, place_id AS m_target_id FROM location ORDER BY location.id LIMIT {1} OFFSET {0};",
+      "TextFilterChains": {
+        "*": "tag-sep-wsp-std"
+      },
+      "Tokenizers": {
+        "*": "std"
+      }
+    },
+    {
+      "Id": "name",
+      "CountSql": "SELECT COUNT(*) FROM name;",
+      "DataSql": "SELECT romanized AS nmrmz, attested AS nmatt, description AS nmdsc, start_year AS m_year_min, end_year AS m_year_max, review_state_id AS m_state, romanized AS m_raw_romanized, place_id AS m_target_id FROM name ORDER BY name.id LIMIT {1} OFFSET {0};",
+      "TextFilterChains": {
+        "*": "tag-sep-wsp-std"
+      },
+      "Tokenizers": {
+        "*": "std"
+      },
+      "TokenMultipliers": {
+        "nmatt": "grc-rom"
+      }
+    }
+  ]
+}

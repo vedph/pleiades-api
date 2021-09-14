@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "pleitool": {
+      "commandName": "Project",
+      "commandLineArgs": "pop-spatial pleiades"
+    }
+  }
+}

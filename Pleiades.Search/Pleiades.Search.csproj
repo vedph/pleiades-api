@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Embix.Core" Version="1.1.0" />
+    <PackageReference Include="Embix.Search" Version="1.1.0" />
+    <PackageReference Include="Fusi.Tools" Version="1.1.17" />
+    <PackageReference Include="SqlKata" Version="2.3.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Pleiades.Core\Pleiades.Core.csproj" />
+  </ItemGroup>
+
+</Project>

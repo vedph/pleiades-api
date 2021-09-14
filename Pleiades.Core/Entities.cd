@@ -1,0 +1,178 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="Pleiades.Core.Attestation">
+    <Position X="12.5" Y="5.75" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAQAAAAAAAAAAAEAAAAAAAAAAAAABAAAAAAAAAAAAA=</HashCode>
+      <FileName>Attestation.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Pleiades.Core.Author">
+    <Position X="6.25" Y="10.75" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAEAABAAAQAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Author.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Pleiades.Core.Connection">
+    <Position X="6" Y="5" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAABAAAAAAAAAACIAAAAAAAAAAQAAAgCAAAAAAAAAA=</HashCode>
+      <FileName>Connection.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Creators" />
+      <Property Name="Contributors" />
+      <Property Name="Attestations" />
+      <Property Name="References" />
+    </ShowAsCollectionAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="Pleiades.Core.ConnectionBase">
+    <Position X="6" Y="0.5" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>ACgAAAAAAAAhAEAEABICQAAAAAAAAAQACAAAACAAAAA=</HashCode>
+      <FileName>ConnectionBase.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Pleiades.Core.Location">
+    <Position X="8.75" Y="5" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAABAAAAAAAAAACIAAAAAAAAAAQAAAACAAAAAAOQAA=</HashCode>
+      <FileName>Location.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Creators" />
+      <Property Name="Contributors" />
+      <Property Name="Attestations" />
+      <Property Name="References" />
+      <Property Name="Metadata" />
+    </ShowAsCollectionAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="Pleiades.Core.LocationBase">
+    <Position X="8.75" Y="0.5" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>ACgAAAAAAAAhQEAEABACAAAAAAAgAAQACQAAAAAAgAA=</HashCode>
+      <FileName>LocationBase.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Pleiades.Core.Metadata">
+    <Position X="12" Y="2.5" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAEAAAAAAQAAAAAAAAAAAAgAAAAAAA=</HashCode>
+      <FileName>Metadata.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Pleiades.Core.Name">
+    <Position X="0.75" Y="10.5" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAABAAAAAAAAAACIAAAAAAAAAAQAAAACAAAAAAAQAA=</HashCode>
+      <FileName>Name.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Creators" />
+      <Property Name="Contributors" />
+      <Property Name="Attestations" />
+      <Property Name="References" />
+    </ShowAsCollectionAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="Pleiades.Core.NameBase">
+    <Position X="0.75" Y="5.5" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>ACgAAAAACAAhAABEgBICAAAAAAAAAAQADQAAAAAABgA=</HashCode>
+      <FileName>NameBase.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Pleiades.Core.Place">
+    <Position X="3.25" Y="6" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAhAAAAAAAAAACIAIBAAAAAAAQAAAACIAAACAEAAA=</HashCode>
+      <FileName>Place.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Features" />
+      <Property Name="Creators" />
+      <Property Name="Contributors" />
+      <Property Name="Locations" />
+      <Property Name="Connections" />
+      <Property Name="Attestations" />
+      <Property Name="References" />
+      <Property Name="Names" />
+      <Property Name="Metadata" />
+    </ShowAsCollectionAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="Pleiades.Core.PlaceBase">
+    <Position X="3.25" Y="0.5" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>ACACEAAAAAAhAECEABIABAAAAAAAAAQACQCACCAAAAA=</HashCode>
+      <FileName>PlaceBase.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Pleiades.Core.PlaceFeature">
+    <Position X="6.25" Y="7.5" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAgAEAEAAAAAAAAAAAAAAAAAQAAQgAAkAA=</HashCode>
+      <FileName>PlaceFeature.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Pleiades.Core.Reference">
+    <Position X="12.5" Y="8.5" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>QAEAAAAAAAAABEAEAAIAAEAAQAAAAAAAAQAAQAAAAAA=</HashCode>
+      <FileName>Reference.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Pleiades.Core.Lookup">
+    <Position X="0.75" Y="0.5" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAIAEAAAAAAAAAAAAAIAAAAAAAAAAAAA=</HashCode>
+      <FileName>Lookup.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

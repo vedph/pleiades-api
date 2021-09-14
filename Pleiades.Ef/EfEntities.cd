@@ -1,0 +1,252 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="Pleiades.Ef.EfPlace">
+    <Position X="5.75" Y="5.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAgAAAAAACAAECAAIBAAAAAABQAEAAAAAAAAAEAAA=</HashCode>
+      <FileName>EfPlace.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Features" />
+      <Property Name="Authors" />
+      <Property Name="Locations" />
+      <Property Name="SourceConnections" />
+      <Property Name="TargetConnections" />
+      <Property Name="Attestations" />
+      <Property Name="References" />
+      <Property Name="Names" />
+      <Property Name="Metadata" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="Pleiades.Ef.EfPlaceAttestation" Collapsed="true">
+    <Position X="9" Y="2.25" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Properties" Collapsed="true" />
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAEAAAAAAAAAAAAAAAAAEAAAAAABAA=</HashCode>
+      <FileName>EfPlaceAttestation.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Pleiades.Ef.EfPlaceAuthorLink">
+    <Position X="8.5" Y="0.5" Width="1.75" />
+    <Members>
+      <Property Name="AuthorId" Hidden="true" />
+      <Property Name="Place" Hidden="true" />
+      <Property Name="PlaceId" Hidden="true" />
+    </Members>
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAEkAAAAAAAAAAAAAAAAFAAAAAABAA=</HashCode>
+      <FileName>EfPlaceAuthorLink.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Author" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="Pleiades.Ef.EfConnection">
+    <Position X="9" Y="4.5" Width="1.75" />
+    <Members>
+      <Property Name="Source" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAgACAAACAAAAACBAAABQAAAgAAAAAAABAAA=</HashCode>
+      <FileName>EfConnection.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Target" />
+    </ShowAsAssociation>
+    <ShowAsCollectionAssociation>
+      <Property Name="Authors" />
+      <Property Name="Attestations" />
+      <Property Name="References" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="Pleiades.Ef.EfConnectionReference" Collapsed="true">
+    <Position X="12" Y="6.5" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAEkAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>EfConnectionReference.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Pleiades.Ef.EfPlaceFeature" Collapsed="true">
+    <Position X="3.25" Y="1.5" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAEAAAAAAAAAAAAAAAAAEAAAAAABAA=</HashCode>
+      <FileName>EfPlaceFeature.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Pleiades.Ef.EfLocation">
+    <Position X="3.25" Y="4" Width="1.75" />
+    <Members>
+      <Property Name="Place" Hidden="true" />
+    </Members>
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAACAAAGAAAAAAAAAABQAAAAAEAAAAAGRAA=</HashCode>
+      <FileName>EfLocation.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Authors" />
+      <Property Name="Attestations" />
+      <Property Name="References" />
+      <Property Name="Metadata" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="Pleiades.Ef.EfLocationAuthorLink">
+    <Position X="0.5" Y="2.75" Width="1.75" />
+    <Members>
+      <Property Name="AuthorId" Hidden="true" />
+      <Property Name="Location" Hidden="true" />
+      <Property Name="LocationId" Hidden="true" />
+    </Members>
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAIAAAAAAAAAAAEkAIAAAAAAAAAAAAAABAAAAAAAAA=</HashCode>
+      <FileName>EfLocationAuthorLink.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Author" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="Pleiades.Ef.EfAuthor" Collapsed="true">
+    <Position X="7.5" Y="10" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>EfAuthor.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Pleiades.Ef.EfPlaceMeta" Collapsed="true">
+    <Position X="8.75" Y="7.5" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAABAA=</HashCode>
+      <FileName>EfPlaceMeta.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Pleiades.Ef.EfName">
+    <Position X="3.75" Y="7.5" Width="1.75" />
+    <Members>
+      <Property Name="Place" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAACAAACAAAAAAAAAABQAAAAAEAAAAAARAA=</HashCode>
+      <FileName>EfName.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Authors" />
+      <Property Name="Attestations" />
+      <Property Name="References" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="Pleiades.Ef.EfNameAttestation" Collapsed="true">
+    <Position X="0.5" Y="7.5" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAgAAEAAAAAAQAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>EfNameAttestation.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Pleiades.Ef.EfNameAuthorLink">
+    <Position X="3.75" Y="9.75" Width="1.75" />
+    <Members>
+      <Property Name="AuthorId" Hidden="true" />
+      <Property Name="Name" Hidden="true" />
+      <Property Name="NameId" Hidden="true" />
+    </Members>
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAgAAEkAAAAAQAAAAAAAAAABAAAAAAAAA=</HashCode>
+      <FileName>EfNameAuthorLink.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Author" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="Pleiades.Ef.EfNameReference" Collapsed="true">
+    <Position X="0.5" Y="8.5" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAgAAEAAAAAAQAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>EfNameReference.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Pleiades.Ef.EfPlaceReference" Collapsed="true">
+    <Position X="9" Y="3.25" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAEAAAAAABAA=</HashCode>
+      <FileName>EfPlaceReference.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Pleiades.Ef.EfLocationAttestation" Collapsed="true">
+    <Position X="0.5" Y="4.5" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAKAAAAAAAAAAAEAAIAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>EfLocationAttestation.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Pleiades.Ef.EfLocationReference" Collapsed="true">
+    <Position X="0.5" Y="5.5" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAIAAAAAAAAAAAEAAIAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>EfLocationReference.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Pleiades.Ef.EfLocationMeta" Collapsed="true">
+    <Position X="0.5" Y="6.5" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAIAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>EfLocationMeta.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Pleiades.Ef.EfConnectionAttestation" Collapsed="true">
+    <Position X="12" Y="3.75" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAEkAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>EfConnectionAttestation.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Pleiades.Ef.EfConnectionAuthorLink">
+    <Position X="12" Y="4.75" Width="1.75" />
+    <Members>
+      <Property Name="AuthorId" Hidden="true" />
+      <Property Name="Connection" Hidden="true" />
+      <Property Name="ConnectionId" Hidden="true" />
+    </Members>
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAEkkAAAAAAAAAAAAAAAABAAAAAAAAA=</HashCode>
+      <FileName>EfConnectionAuthorLink.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Author" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="Pleiades.Ef.EfPlaceLink" Collapsed="true">
+    <Position X="6" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAgAAAAAEAAAAACBAAAAAAAAAAAAAAAABAAA=</HashCode>
+      <FileName>EfPlaceLink.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Source" />
+      <Property Name="Target" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="Pleiades.Ef.EfMetaBase" Collapsed="true">
+    <Position X="11.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>EfMetaBase.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>
