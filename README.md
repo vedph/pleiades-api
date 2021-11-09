@@ -638,3 +638,7 @@ Here is the tree from the root object:
     - _creators[]_ (`Author[]`)
     - _contributors[]_ (`Author[]`)
     - history[] (`EditAction[]`)
+
+## History
+
+- 2021-11-09: upgraded to NET 6.
