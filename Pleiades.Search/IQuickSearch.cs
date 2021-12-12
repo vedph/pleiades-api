@@ -14,7 +14,7 @@ namespace Pleiades.Search
         /// </summary>
         /// <param name="filter">The filter.</param>
         /// <returns>Resulting page.</returns>
-        DataPage<Lookup> GetLookup(LookupFilter filter);
+        DataPage<LookupEntry> GetLookup(LookupFilter filter);
 
         /// <summary>
         /// Executes the search according to the specified request.

@@ -15,7 +15,7 @@ namespace Pleiades.Core
     /// <para>This class is not safe for multithreading, as it's built for a
     /// linear import process.</para>
     /// </summary>
-    public sealed class LookupSet
+    public sealed class LookupEntrySet
     {
         public const string STATE_GROUP = "state";
         public const string NAMETYPE_GROUP = "name-type";
@@ -25,21 +25,21 @@ namespace Pleiades.Core
         public const string REFTYPE_GROUP = "ref-type";
         public const string REFCITTYPE_GROUP = "ref-cit-type";
 
-        private readonly Dictionary<Tuple<string, string>, Lookup> _lookups;
+        private readonly Dictionary<Tuple<string, string>, LookupEntry> _lookups;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="LookupSet"/> class.
+        /// Initializes a new instance of the <see cref="LookupEntrySet"/> class.
         /// </summary>
-        public LookupSet()
+        public LookupEntrySet()
         {
-            _lookups = new Dictionary<Tuple<string, string>, Lookup>();
+            _lookups = new Dictionary<Tuple<string, string>, LookupEntry>();
         }
 
         /// <summary>
         /// Gets the lookup data entries.
         /// </summary>
         /// <returns>Prefixes</returns>
-        public IEnumerable<Lookup> GetLookups() => _lookups.Values;
+        public IEnumerable<LookupEntry> GetLookups() => _lookups.Values;
 
         /// <summary>
         /// Clears this set.
@@ -68,7 +68,7 @@ namespace Pleiades.Core
             var key = GetKey(fullName, group);
             if (!_lookups.ContainsKey(key))
             {
-                _lookups[key] = new Lookup
+                _lookups[key] = new LookupEntry
                 {
                     Id = _lookups.Count + 1,
                     Group = group,

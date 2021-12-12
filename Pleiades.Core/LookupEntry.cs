@@ -3,7 +3,7 @@
     /// <summary>
     /// A lookup entry replacing a string value with a number.
     /// </summary>
-    public class Lookup
+    public class LookupEntry
     {
         /// <summary>
         /// Gets or sets the numeric identifier arbitrarily assigned to this

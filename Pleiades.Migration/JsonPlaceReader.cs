@@ -40,7 +40,7 @@ namespace Pleiades.Migration
         /// <summary>
         /// Gets the lookup set.
         /// </summary>
-        public LookupSet LookupSet { get; }
+        public LookupEntrySet LookupSet { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JsonPlaceReader"/> class.
@@ -49,10 +49,10 @@ namespace Pleiades.Migration
         /// <param name="lookupSet">The lookup set or null to create a new one.
         /// </param>
         /// <exception cref="ArgumentNullException">stream</exception>
-        public JsonPlaceReader(Stream stream, LookupSet lookupSet)
+        public JsonPlaceReader(Stream stream, LookupEntrySet lookupSet)
         {
             _stream = stream ?? throw new ArgumentNullException(nameof(stream));
-            LookupSet = lookupSet ?? new LookupSet();
+            LookupSet = lookupSet ?? new LookupEntrySet();
             _jwOptions = new JsonSerializerOptions { WriteIndented = false };
 
             // root object has @context{}, @graph[]: move to @graph's first item

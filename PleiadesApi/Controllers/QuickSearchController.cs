@@ -1,8 +1,8 @@
 ﻿using Fusi.Tools.Data;
 using Microsoft.AspNetCore.Mvc;
+using Pleiades.Core;
 using Pleiades.Search;
 using PleiadesApi.Models;
-using Lookup = Pleiades.Core.Lookup;
 
 namespace PleiadesApi.Controllers
 {
@@ -32,7 +32,7 @@ namespace PleiadesApi.Controllers
         /// <returns>Page.</returns>
         [HttpGet("api/lookup")]
         [ProducesResponseType(200)]
-        public ActionResult<DataPage<Lookup>> GetLookup(
+        public ActionResult<DataPage<LookupEntry>> GetLookup(
             [FromQuery] LookupBindingModel model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);

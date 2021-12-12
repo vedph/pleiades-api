@@ -65,7 +65,7 @@ namespace Pleiades.Search
         /// Resulting page.
         /// </returns>
         /// <exception cref="ArgumentNullException">filter</exception>
-        public DataPage<Lookup> GetLookup(LookupFilter filter)
+        public DataPage<LookupEntry> GetLookup(LookupFilter filter)
         {
             if (filter == null)
                 throw new ArgumentNullException(nameof(filter));
@@ -89,19 +89,19 @@ namespace Pleiades.Search
                 int total = (int)row.count;
                 if (total == 0)
                 {
-                    return new DataPage<Lookup>(
+                    return new DataPage<LookupEntry>(
                         filter.PageNumber, filter.PageSize, 0,
-                        Array.Empty<Lookup>());
+                        Array.Empty<LookupEntry>());
                 }
 
                 // get entries
-                return new DataPage<Lookup>(filter.PageNumber, filter.PageSize,
-                    total, query.Get<Lookup>().ToList());
+                return new DataPage<LookupEntry>(filter.PageNumber, filter.PageSize,
+                    total, query.Get<LookupEntry>().ToList());
             }
 
             // else we get all the entries at once
-            List<Lookup> entries = query.Get<Lookup>().ToList();
-            return new DataPage<Lookup>(filter.PageNumber, filter.PageSize,
+            List<LookupEntry> entries = query.Get<LookupEntry>().ToList();
+            return new DataPage<LookupEntry>(filter.PageNumber, filter.PageSize,
                 entries.Count, entries);
         }
 

@@ -13,7 +13,7 @@ namespace Pleiades.Ef
         /// <summary>
         /// Gets the lookup set.
         /// </summary>
-        public LookupSet LookupSet { get; }
+        public LookupEntrySet LookupSet { get; }
 
         /// <summary>
         /// Gets the authors being tracked in this adapter.
@@ -25,7 +25,7 @@ namespace Pleiades.Ef
         /// </summary>
         /// <param name="lookupSet">The lookup set.</param>
         /// <exception cref="ArgumentNullException">lookupSet</exception>
-        public EfPlaceAdapter(LookupSet lookupSet)
+        public EfPlaceAdapter(LookupEntrySet lookupSet)
         {
             LookupSet = lookupSet
                 ?? throw new ArgumentNullException(nameof(lookupSet));
@@ -99,9 +99,9 @@ namespace Pleiades.Ef
             return new EfConnectionReference
             {
                 Title = reference.Title,
-                TypeId = LookupSet.GetId(reference.Type, null, LookupSet.REFTYPE_GROUP),
+                TypeId = LookupSet.GetId(reference.Type, null, LookupEntrySet.REFTYPE_GROUP),
                 CitTypeUriId = LookupSet.GetId(reference.CitTypeUri, null,
-                    LookupSet.REFCITTYPE_GROUP),
+                    LookupEntrySet.REFCITTYPE_GROUP),
                 AccessUri = reference.AccessUri,
                 AlternateUri = reference.AlternateUri,
                 BibUri = reference.BibUri,
@@ -125,13 +125,13 @@ namespace Pleiades.Ef
                 Details = connection.Details,
                 Provenance = connection.Provenance,
                 CertaintyId = LookupSet.GetId(connection.Certainty, null,
-                    LookupSet.CONNCERT_GROUP),
+                    LookupEntrySet.CONNCERT_GROUP),
                 TargetUri = connection.TargetUri,
                 Created = connection.Created,
                 Modified = connection.Modified,
                 TypeId = LookupSet.GetId(connection.TypeId),
                 ReviewStateId = LookupSet.GetId(connection.ReviewState,
-                    null, LookupSet.STATE_GROUP),
+                    null, LookupEntrySet.STATE_GROUP),
                 SourceId = sourcePlaceId,
                 TargetId = null     // unknown, will be set later
             };
@@ -212,9 +212,9 @@ namespace Pleiades.Ef
             {
                 Title = reference.Title,
                 TypeId = LookupSet.GetId(reference.Type, null,
-                    LookupSet.REFTYPE_GROUP),
+                    LookupEntrySet.REFTYPE_GROUP),
                 CitTypeUriId = LookupSet.GetId(reference.CitTypeUri,
-                    null, LookupSet.REFCITTYPE_GROUP),
+                    null, LookupEntrySet.REFCITTYPE_GROUP),
                 AccessUri = reference.AccessUri,
                 AlternateUri = reference.AlternateUri,
                 BibUri = reference.BibUri,
@@ -245,7 +245,7 @@ namespace Pleiades.Ef
                 CertaintyId = LookupSet.GetId(location.CertaintyId),
                 AccuracyId = LookupSet.GetId(location.AccuracyId),
                 ReviewStateId = LookupSet.GetId(location.ReviewState, null,
-                    LookupSet.STATE_GROUP)
+                    LookupEntrySet.STATE_GROUP)
             };
 
             // creators, contributors
@@ -334,9 +334,9 @@ namespace Pleiades.Ef
             {
                 Title = reference.Title,
                 TypeId = LookupSet.GetId(reference.Type, null,
-                    LookupSet.REFTYPE_GROUP),
+                    LookupEntrySet.REFTYPE_GROUP),
                 CitTypeUriId = LookupSet.GetId(reference.CitTypeUri, null,
-                    LookupSet.REFCITTYPE_GROUP),
+                    LookupEntrySet.REFCITTYPE_GROUP),
                 AccessUri = reference.AccessUri,
                 AlternateUri = reference.AlternateUri,
                 BibUri = reference.BibUri,
@@ -354,8 +354,8 @@ namespace Pleiades.Ef
                 Place = place,
                 CertaintyId = LookupSet.GetId(name.CertaintyId),
                 ReviewStateId = LookupSet.GetId(name.ReviewState, null,
-                    LookupSet.STATE_GROUP),
-                TypeId = LookupSet.GetId(name.Type, null, LookupSet.NAMETYPE_GROUP),
+                    LookupEntrySet.STATE_GROUP),
+                TypeId = LookupSet.GetId(name.Type, null, LookupEntrySet.NAMETYPE_GROUP),
                 Uri = name.Uri,
                 Language = name.Language ?? "",
                 StartYear = name.StartYear,
@@ -366,9 +366,9 @@ namespace Pleiades.Ef
                 Description = name.Description,
                 Details = name.Details,
                 TrAccuracyId = LookupSet.GetId(name.TrAccuracy, null,
-                    LookupSet.NAMETRAC_GROUP),
+                    LookupEntrySet.NAMETRAC_GROUP),
                 TrCompletenessId = LookupSet.GetId(name.TrCompleteness, null,
-                    LookupSet.NAMETRCP_GROUP),
+                    LookupEntrySet.NAMETRCP_GROUP),
                 Created = name.Created,
                 Modified = name.Modified
             };
@@ -460,9 +460,9 @@ namespace Pleiades.Ef
             return new EfPlaceReference
             {
                 Title = reference.Title,
-                TypeId = LookupSet.GetId(reference.Type, null, LookupSet.REFTYPE_GROUP),
+                TypeId = LookupSet.GetId(reference.Type, null, LookupEntrySet.REFTYPE_GROUP),
                 CitTypeUriId = LookupSet.GetId(reference.CitTypeUri, null,
-                    LookupSet.REFCITTYPE_GROUP),
+                    LookupEntrySet.REFCITTYPE_GROUP),
                 AccessUri = reference.AccessUri,
                 AlternateUri = reference.AlternateUri,
                 BibUri = reference.BibUri,
@@ -496,7 +496,7 @@ namespace Pleiades.Ef
                 BboxNeLat = source.BboxNeLat,
                 BboxNeLon = source.BboxNeLon,
                 ReviewStateId = LookupSet.GetId(source.ReviewState, null,
-                    LookupSet.STATE_GROUP)
+                    LookupEntrySet.STATE_GROUP)
             };
 
             // features
