@@ -106,11 +106,19 @@ namespace Pleiades.Search
         }
 
         /// <summary>
+        /// Adapt the result to a type equal to or derived from
+        /// <see cref="QuickSearchResult"/>.
+        /// </summary>
+        /// <param name="result"></param>
+        /// <returns>The result.</returns>
+        protected abstract QuickSearchResult AdaptResult(dynamic result);
+
+        /// <summary>
         /// Executes the specified request.
         /// </summary>
         /// <param name="request">The request.</param>
         /// <exception cref="ArgumentNullException">request</exception>
-        public DataPage<dynamic> Execute(QuickSearchRequest request)
+        public DataPage<QuickSearchResult> Execute(QuickSearchRequest request)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
@@ -124,11 +132,11 @@ namespace Pleiades.Search
             int total = (int)row.count;
 
             // items
-            List<dynamic> places = new List<dynamic>();
+            List<QuickSearchResult> places = new List<QuickSearchResult>();
             foreach (dynamic place in qf.FromQuery(t.Item1).Get())
-                places.Add(place);
+                places.Add(AdaptResult(place));
 
-            return new DataPage<dynamic>(request.PageNumber,
+            return new DataPage<QuickSearchResult>(request.PageNumber,
                 request.PageSize, total, places);
         }
     }

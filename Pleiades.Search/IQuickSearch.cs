@@ -21,6 +21,6 @@ namespace Pleiades.Search
         /// </summary>
         /// <param name="request">The request.</param>
         /// <returns>Resulting page.</returns>
-        DataPage<dynamic> Execute(QuickSearchRequest request);
+        DataPage<QuickSearchResult> Execute(QuickSearchRequest request);
     }
 }

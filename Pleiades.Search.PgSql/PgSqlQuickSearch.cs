@@ -17,6 +17,26 @@ namespace Pleiades.Search.PgSql
         }
 
         /// <summary>
+        /// Adapt the result to a type equal to or derived from
+        /// <see cref="QuickSearchResult"/>.
+        /// </summary>
+        /// <param name="result"></param>
+        /// <returns>The result.</returns>
+        protected override QuickSearchResult AdaptResult(dynamic result)
+        {
+            return new QuickSearchResult
+            {
+                Id = result.id,
+                UriPrefix = "https://pleiades.stoa.org/places/",
+                Name = result.title,
+                Type = result.type,
+                Lat = result.rp_lat,
+                Lng = result.rp_lon,
+                Payload = result
+            };
+        }
+
+        /// <summary>
         /// Gets the connection.
         /// </summary>
         /// <returns>
