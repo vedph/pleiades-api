@@ -45,10 +45,10 @@ namespace PleiadesApi.Controllers
         /// </summary>
         /// <param name="model">The search model.</param>
         /// <returns>The requested page of results.</returns>
-        [HttpPost("api/qsearch")]
+        [HttpGet("api/qsearch")]
         [ProducesResponseType(200)]
         public ActionResult<DataPage<dynamic>> Search(
-            [FromBody] QuickSearchBindingModel model)
+            [FromQuery] QuickSearchBindingModel model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
