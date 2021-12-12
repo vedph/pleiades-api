@@ -14,7 +14,7 @@
     <PackageReference Include="Fusi.Tools" Version="1.1.17" />
     <PackageReference Include="GeoJSON" Version="2.3.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
-    <PackageReference Include="Npgsql" Version="6.0.0-rc.2" />
+    <PackageReference Include="Npgsql" Version="6.0.1" />
   </ItemGroup>
 
 </Project>

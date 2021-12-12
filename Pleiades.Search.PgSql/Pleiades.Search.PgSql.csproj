@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Npgsql" Version="6.0.0-rc.2" />
+    <PackageReference Include="Npgsql" Version="6.0.1" />
     <PackageReference Include="SqlKata.Execution" Version="2.3.7" />
   </ItemGroup>
 
