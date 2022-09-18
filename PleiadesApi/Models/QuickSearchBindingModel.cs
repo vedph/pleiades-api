@@ -66,7 +66,7 @@ namespace PleiadesApi.Models
         /// <returns>Request.</returns>
         public QuickSearchRequest ToQuickSearchRequest()
         {
-            QuickSearchRequest request = new QuickSearchRequest
+            QuickSearchRequest request = new()
             {
                 PageNumber = PageNumber,
                 PageSize = PageSize,

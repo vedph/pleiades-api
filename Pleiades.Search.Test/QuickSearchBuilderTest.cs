@@ -7,13 +7,13 @@ namespace Pleiades.Search.Test
 {
     public sealed class QuickSearchBuilderTest
     {
-        private static readonly Regex _wsRegex = new Regex(@"\s+");
+        private static readonly Regex _wsRegex = new(@"\s+");
         private static readonly Compiler _compiler = new PostgresCompiler();
 
         [Fact]
         public void Build_TextOnly_Ok()
         {
-            QuickSearchBuilder builder = new QuickSearchBuilder();
+            QuickSearchBuilder builder = new();
             var t = builder.Build(new QuickSearchRequest
             {
                 Text = "Epidaurus"

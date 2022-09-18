@@ -128,14 +128,14 @@ namespace Pleiades.Tool.Services
             if (string.IsNullOrEmpty(headerText))
                 return;
 
-            string line = new string(wrapperChar, headerText.Length);
+            string line = new(wrapperChar, headerText.Length);
 
             WriteLine(line, dashColor);
             WriteLine(headerText, headerColor);
             WriteLine(line, dashColor);
         }
 
-        private static readonly Lazy<Regex> colorBlockRegEx = new Lazy<Regex>(
+        private static readonly Lazy<Regex> colorBlockRegEx = new(
             () => new Regex("\\[(?<color>.*?)\\](?<text>[^[]*)\\[/\\k<color>\\]",
                 RegexOptions.IgnoreCase),
                 isThreadSafe: true);

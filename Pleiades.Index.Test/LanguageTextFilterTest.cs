@@ -14,8 +14,8 @@ namespace Pleiades.Index.Test
         [InlineData("etruscan-in-latin-characters", "xx")]
         public void Apply(string text, string expected)
         {
-            LanguageTextFilter filter = new LanguageTextFilter();
-            StringBuilder sb = new StringBuilder(text);
+            LanguageTextFilter filter = new();
+            StringBuilder sb = new(text);
             filter.Apply(sb);
             Assert.Equal(expected, sb.ToString());
         }

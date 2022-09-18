@@ -28,7 +28,7 @@ namespace Pleiades.Ef.PgSql
         /// <returns>SQL.</returns>
         protected override string GetSql()
         {
-            using StreamReader reader = new StreamReader(
+            using StreamReader reader = new(
                 Assembly.GetExecutingAssembly()
                 .GetManifestResourceStream("Pleiades.Ef.PgSql.Assets.Schema.pgsql"),
                 Encoding.UTF8);

@@ -14,7 +14,7 @@ namespace Pleiades.Migration
     /// </summary>
     public sealed class EfPleiadesWriter : IDisposable
     {
-        private readonly IPleiadesContextFactory _factory;
+        // private readonly IPleiadesContextFactory _factory;
         private readonly List<EfPlace> _places;
         private readonly PleiadesDbContext _context;
         private bool _disposedValue;
@@ -36,7 +36,7 @@ namespace Pleiades.Migration
         /// <exception cref="ArgumentNullException">context</exception>
         public EfPleiadesWriter(IPleiadesContextFactory factory)
         {
-            _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+            // _factory = factory ?? throw new ArgumentNullException(nameof(factory));
             _places = new List<EfPlace>();
             // TODO: get new context at each flush
             _context = factory.GetContext();
@@ -82,8 +82,8 @@ namespace Pleiades.Migration
             if (links == null)
                 throw new ArgumentNullException(nameof(links));
 
-            List<EfConnection> resConnections = new List<EfConnection>();
-            List<EfPlaceLink> resLinks = new List<EfPlaceLink>();
+            List<EfConnection> resConnections = new();
+            List<EfPlaceLink> resLinks = new();
 
             foreach (PendingLink link in links)
             {

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Text.Json;
 
 namespace Pleiades.Migration
@@ -54,6 +55,12 @@ namespace Pleiades.Migration
             JsonElement child = element.TryGetProperty(
                 name, out JsonElement value) ? value : default;
 
+            if (child.ValueKind == JsonValueKind.String)
+            {
+                return int.TryParse(child.GetString(), NumberStyles.Any,
+                    CultureInfo.InvariantCulture, out int n) ? n : 0;
+            }
+
             return (child.ValueKind == JsonValueKind.Null ||
                 child.ValueKind == JsonValueKind.Undefined) ?
                 0 : child.GetInt32();
@@ -64,6 +71,12 @@ namespace Pleiades.Migration
         {
             JsonElement child = element.TryGetProperty(
                 name, out JsonElement value) ? value : default;
+
+            if (child.ValueKind == JsonValueKind.String)
+            {
+                return double.TryParse(child.GetString(), NumberStyles.Any,
+                    CultureInfo.InvariantCulture, out double n) ? n : 0;
+            }
 
             return (child.ValueKind == JsonValueKind.Null ||
                 child.ValueKind == JsonValueKind.Undefined) ?

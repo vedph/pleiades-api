@@ -72,7 +72,7 @@ namespace Pleiades.Search
 
             using IDbConnection connection = GetConnection();
             connection.Open();
-            QueryFactory qf = new QueryFactory(connection, _compiler);
+            QueryFactory qf = new(connection, _compiler);
 
             Query query = qf.Query("lookup")
                 .Select("id", "full_name", "short_name", "group")
@@ -125,14 +125,14 @@ namespace Pleiades.Search
 
             var t = _builder.Build(request);
             using IDbConnection connection = GetConnection();
-            QueryFactory qf = new QueryFactory(connection, _compiler);
+            QueryFactory qf = new(connection, _compiler);
 
             // count
             dynamic row = qf.FromQuery(t.Item2).AsCount().First();
             int total = (int)row.count;
 
             // items
-            List<QuickSearchResult> places = new List<QuickSearchResult>();
+            List<QuickSearchResult> places = new();
             foreach (dynamic place in qf.FromQuery(t.Item1).Get())
                 places.Add(AdaptResult(place));
 

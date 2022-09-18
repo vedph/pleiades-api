@@ -49,7 +49,7 @@ namespace Pleiades.Search
         /// </returns>
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
 
             if (DistancePoint != null)
             {

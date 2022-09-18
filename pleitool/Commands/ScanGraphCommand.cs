@@ -88,12 +88,12 @@ namespace Pleiades.Tool.Commands
 
             if (!Directory.Exists(_outputDir)) Directory.CreateDirectory(_outputDir);
 
-            PlaceMetrics metrics = new PlaceMetrics();
+            PlaceMetrics metrics = new();
 
             using (Stream stream = new FileStream(_inputFile, FileMode.Open,
                 FileAccess.Read, FileShare.Read))
             {
-                JsonPlaceReader reader = new JsonPlaceReader(stream, null)
+                JsonPlaceReader reader = new(stream, null)
                 {
                     Logger = Logger
                 };
@@ -105,7 +105,7 @@ namespace Pleiades.Tool.Commands
                 }
                 Console.WriteLine("Places read: " + reader.Position);
 
-                using (StreamWriter writer = new StreamWriter(
+                using (StreamWriter writer = new(
                     Path.Combine(_outputDir, "pl-report.tsv"), false,
                     Encoding.UTF8))
                 {

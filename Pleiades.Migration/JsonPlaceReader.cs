@@ -2,6 +2,7 @@
 using Pleiades.Core;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -15,8 +16,6 @@ namespace Pleiades.Migration
     /// </summary>
     public sealed class JsonPlaceReader
     {
-        private readonly Stream _stream;
-        private readonly JsonDocument _doc;
         private readonly JsonSerializerOptions _jwOptions;
         private readonly JsonElement _graphEl;
         private int _currentIndex;
@@ -51,17 +50,19 @@ namespace Pleiades.Migration
         /// <exception cref="ArgumentNullException">stream</exception>
         public JsonPlaceReader(Stream stream, LookupEntrySet lookupSet)
         {
-            _stream = stream ?? throw new ArgumentNullException(nameof(stream));
+            if (stream is null)
+                throw new ArgumentNullException(nameof(stream));
+
             LookupSet = lookupSet ?? new LookupEntrySet();
             _jwOptions = new JsonSerializerOptions { WriteIndented = false };
 
             // root object has @context{}, @graph[]: move to @graph's first item
-            _doc = JsonDocument.Parse(_stream,
+            var doc = JsonDocument.Parse(stream,
                 new JsonDocumentOptions
                 {
                     AllowTrailingCommas = true
                 });
-            _graphEl = _doc.RootElement.GetProperty("@graph");
+            _graphEl = doc.RootElement.GetProperty("@graph");
             _currentIndex = -1;
             Length = _graphEl.GetArrayLength();
         }
@@ -136,7 +137,7 @@ namespace Pleiades.Migration
         private IList<Metadata> ReadPairs(JsonElement element,
             string vn, string un, string mn)
         {
-            List<Metadata> metadata = new List<Metadata>();
+            List<Metadata> metadata = new();
             string[] types = element.GetStringArrayValue(vn);
             string[] typeUris = element.GetStringArrayValue(un);
 
@@ -243,7 +244,7 @@ namespace Pleiades.Migration
             int i = 0;
             foreach (JsonElement item in element.EnumerateArray())
             {
-                PlaceFeature feature = new PlaceFeature
+                PlaceFeature feature = new()
                 {
                     Type = item.GetStringPropertyValue("type"),
                 };
@@ -284,7 +285,7 @@ namespace Pleiades.Migration
                 }
                 else LookupSet.GetId(uri, value);
 
-                Location location = new Location
+                Location location = new()
                 {
                     CertaintyId = uri,
                     Uri = item.GetStringPropertyValue("uri"),
@@ -340,7 +341,7 @@ namespace Pleiades.Migration
             {
                 var tType = ReadUriAndValue(item, "connectionTypeURI", "connectionType");
 
-                Connection connection = new Connection
+                Connection connection = new()
                 {
                     Uri = item.GetStringPropertyValue("uri"),
                     TypeId = tType?.Item1,
@@ -393,7 +394,7 @@ namespace Pleiades.Migration
                 var tCertainty = ReadUriAndValue(
                     item, "associationCertaintyURI", "associationCertainty");
 
-                Name name = new Name
+                Name name = new()
                 {
                     Uri = item.GetStringPropertyValue("uri"),
                     Language = item.GetStringPropertyValue("language"),
@@ -456,7 +457,7 @@ namespace Pleiades.Migration
             }
 
             JsonElement element = _graphEl[_currentIndex];
-            Place place = new Place
+            Place place = new()
             {
                 Id = element.GetStringPropertyValue("id"),
                 Uri = element.GetStringPropertyValue("uri"),

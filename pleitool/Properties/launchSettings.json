@@ -2,7 +2,7 @@
   "profiles": {
     "pleitool": {
       "commandName": "Project",
-      "commandLineArgs": "pop-spatial pleiades"
+      "commandLineArgs": "import-graph c:\\users\\dfusi\\desktop\\pleiades-places.json -p"
     }
   }
 }

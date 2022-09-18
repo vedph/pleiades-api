@@ -188,7 +188,7 @@ namespace Pleiades.Tool.Commands
                 }
             }
 
-            using (ProgressBar progressBar = new ProgressBar(100,
+            using (ProgressBar progressBar = new(100,
                 $"Importing from {_inputFile}...",
                 new ProgressBarOptions
                 {
@@ -197,21 +197,21 @@ namespace Pleiades.Tool.Commands
             using (Stream stream = new FileStream(_inputFile, FileMode.Open,
                 FileAccess.Read, FileShare.Read))
             {
-                JsonPlaceReader reader = new JsonPlaceReader(stream, null)
+                JsonPlaceReader reader = new(stream, null)
                 {
                     Logger = Logger
                 };
-                EfPlaceAdapter adapter = new EfPlaceAdapter(reader.LookupSet);
+                EfPlaceAdapter adapter = new(reader.LookupSet);
 
                 IPleiadesContextFactory contextFactory =
                     new PgSqlPleiadesContextFactory(_connection);
 
-                using EfPleiadesWriter writer = new EfPleiadesWriter(contextFactory)
+                using EfPleiadesWriter writer = new(contextFactory)
                 {
                     Logger = Logger
                 };
 
-                PlaceImporter importer = new PlaceImporter(
+                PlaceImporter importer = new(
                     reader,
                     writer,
                     adapter)

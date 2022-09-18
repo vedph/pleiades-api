@@ -202,7 +202,7 @@ namespace Pleiades.Search
                 request.Text = Regex.Replace(request.Text, @"\s+", " ").Trim();
 
             // create all the subqueries, one for each token
-            List<Query> queries = new List<Query>();
+            List<Query> queries = new();
 
             if (!string.IsNullOrEmpty(request.Text))
             {

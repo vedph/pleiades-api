@@ -49,7 +49,7 @@ namespace Pleiades.Tool.Commands
             string connection = string.Format(_config.GetConnectionString("Default"),
                 _dbName);
             IBulkTableCopier tableCopier = new PgSqlBulkTableCopier(connection);
-            BulkTablesCopier copier = new BulkTablesCopier(tableCopier);
+            BulkTablesCopier copier = new(tableCopier);
             copier.Write(new[]
             {
                 "lookup", "eix_token", "eix_occurrence",

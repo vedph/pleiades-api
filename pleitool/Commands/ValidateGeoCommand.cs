@@ -43,12 +43,12 @@ namespace Pleiades.Tool.Commands
             Console.WriteLine("VALIDATE GEO\n");
             Console.ResetColor();
 
-            GeoValidator validator = new GeoValidator(
+            GeoValidator validator = new(
                 string.Format(
                     _options.Configuration["ConnectionStrings:PgSql"], _dbName),
                 _options.Logger);
 
-            ProgressBar bar = new ProgressBar(100, null, new ProgressBarOptions
+            ProgressBar bar = new(100, null, new ProgressBarOptions
             {
                 DisplayTimeInRealTime = false,
                 EnableTaskBarProgress = true,

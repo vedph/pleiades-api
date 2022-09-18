@@ -46,7 +46,7 @@ namespace Pleiades.Ef
         #region Author
         private static string BuildIdFromAuthorName(string name)
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             foreach (char c in name.ToLowerInvariant())
             {
                 if (char.IsLetterOrDigit(c)) sb.Append(c);
@@ -115,7 +115,7 @@ namespace Pleiades.Ef
         private PendingLink GetLinkForConnection(
             Connection connection, string sourcePlaceId)
         {
-            EfConnection ef = new EfConnection
+            EfConnection ef = new()
             {
                 Uri = connection.Uri,
                 Title = connection.Title,
@@ -227,7 +227,7 @@ namespace Pleiades.Ef
 
         private EfLocation GetLocation(Location location, EfPlace place)
         {
-            EfLocation ef = new EfLocation
+            EfLocation ef = new()
             {
                 Uri = location.Uri,
                 StartYear = location.StartYear,
@@ -349,7 +349,7 @@ namespace Pleiades.Ef
 
         private EfName GetName(Name name, EfPlace place)
         {
-            EfName ef = new EfName
+            EfName ef = new()
             {
                 Place = place,
                 CertaintyId = LookupSet.GetId(name.CertaintyId),
@@ -476,9 +476,9 @@ namespace Pleiades.Ef
         public Tuple<EfPlace,List<PendingLink>> GetPlace(
             Place source, PlaceChildFlags flags)
         {
-            List<PendingLink> links = new List<PendingLink>();
+            List<PendingLink> links = new();
 
-            EfPlace target = new EfPlace
+            EfPlace target = new()
             {
                 Id = source.Id,
                 Uri = source.Uri,

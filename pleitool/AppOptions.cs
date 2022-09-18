@@ -22,7 +22,7 @@ namespace Pleiades.Tool
 
         private void BuildConfiguration()
         {
-            ConfigurationBuilder cb = new ConfigurationBuilder();
+            ConfigurationBuilder cb = new();
             Configuration = cb
                 .AddJsonFile("appsettings.json")
                 .AddEnvironmentVariables()
@@ -36,8 +36,8 @@ namespace Pleiades.Tool
         {
             if (args == null) throw new ArgumentNullException(nameof(args));
 
-            AppOptions options = new AppOptions();
-            CommandLineApplication app = new CommandLineApplication
+            AppOptions options = new();
+            CommandLineApplication app = new()
             {
                 Name = "Pleiades Tool",
                 FullName = "Importer tool for Pleiades JSON dataset"

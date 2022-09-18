@@ -19,7 +19,7 @@ The only prerequisite is having a PostgreSQL service including PostGIS.
 To launch a PostgreSQL service without installing it, I prefer to use a ready-made Docker also including [PostGIS](https://postgis.net/install/). You can easily run a container like this (in this sample, I created a folder in my drive at `c:\data\pgsql` to host data outside the container):
 
 ```ps1
-docker run --volume postgresData://c/data/pgsql -p 5432:5432 --name postgres -e POSTGRES_PASSWORD=postgres -d postgis/postgis:13-master
+docker run --volume postgresData://c/data/pgsql -p 5432:5432 --name postgres -e POSTGRES_PASSWORD=postgres -d postgis/postgis
 ```
 
 ### Procedure
@@ -641,4 +641,5 @@ Here is the tree from the root object:
 
 ## History
 
+- 2022-09-18: updated packages.
 - 2021-11-09: upgraded to NET 6.

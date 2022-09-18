@@ -21,7 +21,7 @@ namespace PleiadesApi
         {
             Console.WriteLine("ENVIRONMENT VARIABLES:");
             IDictionary dct = Environment.GetEnvironmentVariables();
-            List<string> keys = new List<string>();
+            List<string> keys = new();
             var enumerator = dct.GetEnumerator();
             while (enumerator.MoveNext())
             {

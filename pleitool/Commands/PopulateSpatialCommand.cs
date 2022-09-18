@@ -47,7 +47,7 @@ namespace Pleiades.Tool.Commands
 
         private static string LoadResourceText(string name)
         {
-            using StreamReader reader = new StreamReader(
+            using StreamReader reader = new(
                 Assembly.GetExecutingAssembly().GetManifestResourceStream(
                     $"Pleiades.Tool.Assets.{name}"), Encoding.UTF8);
             return reader.ReadToEnd();

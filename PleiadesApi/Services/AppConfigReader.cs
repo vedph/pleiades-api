@@ -21,7 +21,7 @@ namespace PleiadesApi.Services
             string dir = Directory.GetCurrentDirectory();
 
             // https://stackoverflow.com/questions/41653688/asp-net-core-appsettings-json-update-in-code
-            ConfigurationBuilder cb = new ConfigurationBuilder();
+            ConfigurationBuilder cb = new();
             return string.IsNullOrEmpty(envName)
                 ? cb.SetBasePath(dir)
                     .AddJsonFile("appsettings.json")

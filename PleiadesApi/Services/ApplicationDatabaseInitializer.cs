@@ -31,7 +31,7 @@ namespace PleiadesApi.Services
 
         private static string LoadResourceText(string name)
         {
-            using StreamReader reader = new StreamReader(
+            using StreamReader reader = new(
                 Assembly.GetExecutingAssembly().GetManifestResourceStream(
                     $"PleiadesApi.Assets.{name}"), Encoding.UTF8);
             return reader.ReadToEnd();
@@ -47,7 +47,7 @@ namespace PleiadesApi.Services
             Serilog.Log.Information($"Checking for database {name}...");
 
             string csTemplate = Configuration.GetConnectionString("Default");
-            PgSqlDbManager manager = new PgSqlDbManager(csTemplate);
+            PgSqlDbManager manager = new(csTemplate);
 
             if (!manager.Exists(name))
             {
@@ -59,8 +59,7 @@ namespace PleiadesApi.Services
                 // we need to add to the generic Pleiades schema the auth tables,
                 // plus the text index (Embix) tables
                 Logger?.LogInformation("Creating pleiades database");
-                StringBuilder sb = new StringBuilder();
-                sb.AppendLine(LoadResourceText("Auth.pgsql"));
+                StringBuilder sb = new();
                 sb.AppendLine(LoadResourceText("Index.pgsql"));
                 manager.CreateDatabase("pleiades",
                     PleiadesDbSchema.Get(),
@@ -74,7 +73,7 @@ namespace PleiadesApi.Services
 
                 Logger?.LogInformation("Seeding pleiades database from " + sourceDir);
                 string cs = string.Format(csTemplate, name);
-                BulkTablesCopier copier = new BulkTablesCopier(
+                BulkTablesCopier copier = new(
                     new PgSqlBulkTableCopier(cs));
                 copier.Begin();
                 copier.Read(sourceDir, CancellationToken.None,

@@ -80,7 +80,7 @@ namespace Pleiades.Search
         /// </returns>
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
 
             if (!string.IsNullOrEmpty(Text)) sb.Append("Text: ").Append(Text);
 

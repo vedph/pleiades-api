@@ -78,7 +78,7 @@ CREATE TABLE public.place_feature (
 	place_id varchar(20) NOT NULL,
 	"type" varchar(50) NOT NULL,
 	title varchar(200) NOT NULL,
-	geometry varchar(2000) NULL,
+	geometry varchar NULL,
 	snippet varchar(100) NULL,
 	link varchar(200) NULL,
 	description varchar(500) NULL,
@@ -204,7 +204,7 @@ CREATE TABLE public."location" (
 	description varchar(500) NULL,
 	created date NOT NULL,
 	modified date NOT NULL,
-	geometry varchar(2000) NULL,
+	geometry varchar NULL,
 	geo geography NULL,
 	CONSTRAINT location_pk PRIMARY KEY (id),
 	CONSTRAINT location_fk FOREIGN KEY (place_id) REFERENCES public.place(id) ON DELETE CASCADE ON UPDATE CASCADE

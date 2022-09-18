@@ -105,7 +105,7 @@ namespace Pleiades.Tool.Commands
 
         private static string LoadText(string path)
         {
-            using StreamReader reader = new StreamReader(path, Encoding.UTF8);
+            using StreamReader reader = new(path, Encoding.UTF8);
             return reader.ReadToEnd();
         }
 
@@ -129,26 +129,26 @@ namespace Pleiades.Tool.Commands
                 connString);
             ITableInitializer initializer = new PgSqlPleiadesTableInitializer(
                 new PgSqlDbConnectionFactory(connString));
-            PleiadesMetadataSupplier supplier = new PleiadesMetadataSupplier(
+            PleiadesMetadataSupplier supplier = new(
                 new QueryFactory(new NpgsqlConnection(connString),
                 new PostgresCompiler()));
 
             initializer.Initialize(_clear);
 
-            ProgressBar mainBar = new ProgressBar(100, null, new ProgressBarOptions
+            ProgressBar mainBar = new(100, null, new ProgressBarOptions
             {
                 DisplayTimeInRealTime = false,
                 EnableTaskBarProgress = true,
                 CollapseWhenFinished = true
             });
             Dictionary<string, ChildProgressBar> childBars =
-                new Dictionary<string, ChildProgressBar>();
-            ProgressBarOptions childOptions = new ProgressBarOptions
+                new();
+            ProgressBarOptions childOptions = new()
             {
                 CollapseWhenFinished = true,
                 DisplayTimeInRealTime = false
             };
-            Regex r = new Regex(@"^\[([^]]+)\]", RegexOptions.Compiled);
+            Regex r = new(@"^\[([^]]+)\]", RegexOptions.Compiled);
 
             foreach (DocumentDefinition document in factory.Profile.Documents)
             {
