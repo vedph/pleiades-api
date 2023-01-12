@@ -35,9 +35,9 @@ internal sealed class BuildIndexCommand : AsyncCommand<BuildIndexCommandSettings
     public async override Task<int> ExecuteAsync(CommandContext context,
         BuildIndexCommandSettings settings)
     {
-        AnsiConsole.MarkupLine("[underline red]BUILD INDEX[/]");
-        AnsiConsole.MarkupLine($"Profile path: [green]{settings.ProfilePath}[/]");
-        AnsiConsole.MarkupLine($"DB name: [green]{settings.DbName}[/]");
+        AnsiConsole.MarkupLine("[red underline]BUILD INDEX[/]");
+        AnsiConsole.MarkupLine($"Profile path: [cyan]{settings.ProfilePath}[/]");
+        AnsiConsole.MarkupLine($"Database: [cyan]{settings.DbName}[/]");
 
         Serilog.Log.Information("BUILD INDEX");
         string cs = string.Format(

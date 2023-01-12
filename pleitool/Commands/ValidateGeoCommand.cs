@@ -16,7 +16,7 @@ internal sealed class ValidateGeoCommand : AsyncCommand<ValidateGeoCommandSettin
     public override Task<int> ExecuteAsync(CommandContext context,
         ValidateGeoCommandSettings settings)
     {
-        AnsiConsole.MarkupLine("[green]VALIDATE GEO[/]");
+        AnsiConsole.MarkupLine("[underline green]VALIDATE GEO[/]");
 
         GeoValidator validator = new(
             string.Format(CliAppContext.Configuration.GetConnectionString("Default")!,

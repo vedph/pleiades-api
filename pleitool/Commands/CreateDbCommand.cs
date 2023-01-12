@@ -3,6 +3,7 @@ using Fusi.DbManager.PgSql;
 using Microsoft.Extensions.Configuration;
 using Pleiades.Cli.Services;
 using Pleiades.Ef;
+using Spectre.Console;
 using Spectre.Console.Cli;
 using System;
 using System.ComponentModel;
@@ -15,11 +16,8 @@ internal sealed class CreateDbCommand : AsyncCommand<CreateDbCommandSettings>
     public override Task<int> ExecuteAsync(CommandContext context,
         CreateDbCommandSettings settings)
     {
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine("\nCREATE DATABASE\n");
-        Console.ResetColor();
-        Console.WriteLine(
-            $"Database name: {settings.DbName}\n");
+        AnsiConsole.MarkupLine("[red underline]CREATE DATABASE[/]");
+        AnsiConsole.MarkupLine($"Database: [cyan]{settings.DbName}[/]");
 
         // create database if not exists
         string csTemplate = CliAppContext.Configuration.GetConnectionString("Default")!;

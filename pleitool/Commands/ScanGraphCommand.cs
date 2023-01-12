@@ -41,9 +41,9 @@ internal sealed class ScanGraphCommand : AsyncCommand<ScanGraphCommandSettings>
 
     public override Task<int> ExecuteAsync(CommandContext context, ScanGraphCommandSettings settings)
     {
-        AnsiConsole.Markup("[green]SCAN GRAPH FROM JSON FILE[/]");
+        AnsiConsole.Markup("[underline green]SCAN GRAPH FROM JSON FILE[/]");
         AnsiConsole.Markup($"Input JSON file: [cyan]{settings.InputPath}[/]");
-        AnsiConsole.Markup($": [cyan]{settings.OutputDir}[/]");
+        AnsiConsole.Markup($"Output directory: [cyan]{settings.OutputDir}[/]");
 
         if (!Directory.Exists(settings.OutputDir))
             Directory.CreateDirectory(settings.OutputDir!);

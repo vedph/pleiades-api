@@ -2,6 +2,7 @@
 using Fusi.DbManager.PgSql;
 using Microsoft.Extensions.Configuration;
 using Pleiades.Cli.Services;
+using Spectre.Console;
 using Spectre.Console.Cli;
 using System;
 using System.ComponentModel;
@@ -19,6 +20,10 @@ internal sealed class BulkExportCommand : AsyncCommand<BulkExportCommandSettings
     public override Task<int> ExecuteAsync(CommandContext context,
         BulkExportCommandSettings settings)
     {
+        AnsiConsole.MarkupLine("[green underline]BULK DATA EXPORT[/]");
+        AnsiConsole.MarkupLine($"Database: [cyan]{settings.DbName}[/]");
+        AnsiConsole.MarkupLine($"Target dir: [cyan]{settings.TargetDir}[/]");
+
         if (!Directory.Exists(settings.TargetDir))
             Directory.CreateDirectory(settings.TargetDir);
 

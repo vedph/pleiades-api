@@ -26,7 +26,7 @@ internal sealed class PopulateSpatialCommand :
     public override Task<int> ExecuteAsync(CommandContext context,
         PopulateSpatialCommandSettings settings)
     {
-        AnsiConsole.MarkupLine("[red]POPULATE SPATIAL[/]");
+        AnsiConsole.MarkupLine("[underline red]POPULATE SPATIAL[/]");
         AnsiConsole.MarkupLine($"Database: [cyan]{settings.DbName}[/]");
 
         string csTemplate = CliAppContext.Configuration
