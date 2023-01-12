@@ -134,14 +134,17 @@ internal sealed class BuildQueryCommand : AsyncCommand
 
     private void GetOptions()
     {
-        AnsiConsole.MarkupLine("[underline cyan]Options[/]");
-        AnsiConsole.Write(new Panel(_request.ToString()));
+        AnsiConsole.Write(new Panel(_request.ToString())
+        {
+            Header = new PanelHeader("options")
+        });
 
         _request.IsMatchAnyEnabled = AnsiConsole.Confirm(
-            $"Match any? [{_request.IsMatchAnyEnabled}]");
+            $"Match any? ({_request.IsMatchAnyEnabled})",
+            false);
 
         _request.PlaceType = AnsiConsole.Ask<string?>(
-            "Place type (/... or full URI) [{}]: ");
+            $"Place type (/... or full URI: {_request.PlaceType}): ");
 
         string current = $"{_request.YearMin} {_request.YearMax}";
         IList<int> minMax = PromptForIntRange("Year range", current);
@@ -183,7 +186,8 @@ internal sealed class BuildQueryCommand : AsyncCommand
             }));
         _request.Scopes = scopes.Any(s => s == "all") ? null : scopes;
 
-        if (AnsiConsole.Ask("Set spatial options?", false)) GetSpatialOptions();
+        if (AnsiConsole.Confirm("Set spatial options?", false))
+            GetSpatialOptions();
 
         AnsiConsole.Write(new Panel(_request.ToString()));
     }
@@ -203,6 +207,7 @@ internal sealed class BuildQueryCommand : AsyncCommand
                     "[yellow]R[/]eset | " +
                     "e[red]X[/]it");
                 char c = Console.ReadKey().KeyChar;
+                Console.WriteLine();
                 if (c == 'x') break;
                 if (c == 'o')
                 {
@@ -224,7 +229,7 @@ internal sealed class BuildQueryCommand : AsyncCommand
                     SqlResult result = _compiler.Compile(
                         c == 'c' ? t.Item2 : t.Item1);
 
-                    AnsiConsole.Write(new Panel(result.ToString()));
+                    AnsiConsole.MarkupLine($"[cyan]{result}[/]");
                 }
             }
             catch (Exception e)

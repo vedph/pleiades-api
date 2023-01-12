@@ -61,6 +61,9 @@ public static class Program
                 config.AddCommand<BuildIndexCommand>("index")
                     .WithDescription("Build data index in database");
 
+                config.AddCommand<BuildQueryCommand>("query")
+                    .WithDescription("Build SQL queries");
+
                 config.AddCommand<BulkExportCommand>("export")
                     .WithDescription("Bulk export data from database into BLOB files");
 

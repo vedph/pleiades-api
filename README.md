@@ -18,7 +18,7 @@ The only prerequisite is having a PostgreSQL service including PostGIS.
 
 To launch a PostgreSQL service without installing it, I prefer to use a ready-made Docker also including [PostGIS](https://postgis.net/install/). You can easily run a container like this (in this sample, I created a folder in my drive at `c:\data\pgsql` to host data outside the container):
 
-```ps1
+```bash
 docker run --volume postgresData://c/data/pgsql -p 5432:5432 --name postgres -e POSTGRES_PASSWORD=postgres -d postgis/postgis
 ```
 
@@ -51,13 +51,13 @@ The following procedure will create a database from scratch. You just require:
 - the [indexing profile](./pleitool/Assets/Profile.json).
 - a running PostgreSQL with PostGis service.
 
-(1) **download** the latest Pleiades JSON dataset from [this page](http://atlantides.org/downloads/pleiades/json/).
+(1) **download** the latest Pleiades JSON dataset from [this page](http://atlantides.org/downloads/pleiades/json/), and unzip it in some folder. This is a single huge JSON file.
 
 (2) ensure that your **database** service is running, and that the connection string in `appsettings.json` is correct.
 
 (3) **import** the JSON file into a database named `pleiades` (you can pick whatever name you want; the database name here is not specified as we're going to use the default `pleiades` name -- you can change it with option `-d` for all the commands involving a database name):
 
-```ps1
+```bash
 ./pleitool import-graph c:\users\dfusi\desktop\pleiades-places.json
 ```
 
@@ -67,7 +67,7 @@ The following procedure will create a database from scratch. You just require:
 
 (5) create the text **index** inside the database using the Embix profile:
 
-```ps1
+```bash
 ./pleitool index c:\users\dfusi\desktop\pleiades-profile.json -c
 ```
 
@@ -77,7 +77,7 @@ You will find that your `pleiades` database now has two more tables: `eix_token`
 
 (6) populate the spatial columns in the `pleiades` database with this command:
 
-```ps1
+```bash
 ./pleitool pop-spatial
 ```
 
@@ -153,13 +153,22 @@ ORDER BY place.title, place.id
 LIMIT 20
 ```
 
-Among other results, you will find [Epidauros](https://pleiades.stoa.org/places/570228/).
+Among other results, you will find [Epidauros](https://pleiades.stoa.org/places/570228/), like in this snapshot:
 
-Use the `build-query` command of `pleitool` to build SQL queries according to a set of filters.
+| id        | title                                            | geo_pt                                        |
+|-----------|--------------------------------------------------|-----------------------------------------------|
+| 570228    | Epidauros                                        | POINT (23.16015635 37.6334625)                |
+| 570229    | Epidauros Limera                                 | POINT (23.033451 36.732711)                   |
+| 570127    | Sanctuary of Asklepios at Epidauros              | POINT (23.074264194567963 37.598302342957034) |
+| 570127    | Sanctuary of Asklepios at Epidauros              | POINT (23.074264194567963 37.598302342957034) |
+| 671846980 | Theater at the Sanctuary of Asklepios, Epidauros | POINT (23.079196 37.595976)                   |
+| 995644788 | Tholos at the Sanctuary of Asklepios, Epidauros  | POINT (23.074049189295664 37.59841317509734)  |
+
+💡 You can use the build-query command of `pleitool` to build SQL queries according to a set of filters.
 
 (7) if you want to create the binary files to be imported by the API, run the export command like:
 
-```ps1
+```bash
 ./pleitool export pleiades c:\users\dfusi\desktop\pleiades-bin\
 ```
 
@@ -357,17 +366,50 @@ You can then add as many of these t-queries as required, connecting them with `i
 
 The import tool is a CLI multi-platform tool, not tied to a specific SQL implementation. Even though both MySql and PostgreSql can be used, for the spatial features I'm using PostgreSql.
 
+### Build Index Command
+
+🎯 Build a search index on top of imported data.
+
+Syntax:
+
+```bash
+./pleitool index <JsonFilePath> [-d <DbName>] [-c] [-p <PartitionCount>] [-s <MinPartitionSize>] [-l <RecordLimit>]
+```
+
+- `JsonFilePath` is the path of the JSON profile file for Embix.
+- `DbName` is the target database name. Default=`pleiades`.
+- `-c` tells the initializer to truncate the tables if they are found. Otherwise, the command will create them.
+- `-p` specifies the number of partitions in which input records are distributed during indexing, thus parallelizing the process. Default=2. Use 1 to avoid multiple threads, or higher values for better performance (according to the available hardware resources).
+- `-s` specifies the minimum partition size when using parallelized indexing (default=100). When the total number of records to be indexed for each document is less than this size, no parallelization will occur. Default=100.
+- `-l` specifies an artificial limit for the records to be imported. This can be used for test purposes. Default=0.
+
+Sample:
+
+```bash
+./pleitool index c:/users/dfusi/desktop/pleiades-profile.json -c
+```
+
+### Build Query Command
+
+🎯 Build SQL code to query the database, using an interactive interface.
+
+Syntax:
+
+```bash
+./pleitool query
+```
+
 ### Scan Graph Command
 
 Scan the places graph from the Pleiades JSON file, reporting some metrics about them.
 
-```ps1
+```bash
 ./pleitool scan-graph <inputFilePath> <outputDir>
 ```
 
 Sample:
 
-```ps1
+```bash
 ./pleitool scan-graph c:\users\dfusi\desktop\pleiades-places.json c:\users\dfusi\desktop\pd\
 ```
 
@@ -375,7 +417,7 @@ Sample:
 
 Import the places graph from the Pleiades JSON file into a target database.
 
-```ps1
+```bash
 ./pleitool scan-graph <inputFilePath> [-d databaseName] [-t databaseType] [-p] [-s SkipCount] [-l Limit] [-f Flags]
 ```
 
@@ -402,30 +444,8 @@ Where:
 
 Sample (try with 10 places without writing to DB):
 
-```ps1
+```bash
 ./pleitool import-graph c:\users\dfusi\desktop\pleiades-places.json -l 10 -p -t pgsql
-```
-
-### Build Index Command
-
-Syntax:
-
-```ps1
-./pleitool index <JsonFilePath> <DatabaseName> [-t <DatabaseType>] [-c] [-p <PartitionCount>] [-s <MinPartitionSize>] [-l <RecordLimit>]
-```
-
-- `JsonFilePath` is the path of the JSON profile file for Embix.
-- `DatabaseName` is the target database name.
-- `-t` the database type. Allowed values are `pgsql` (default) or `mysql`.
-- `-c` tells the initializer to truncate the tables if they are found. Otherwise, the command will create them.
-- `-p` specifies the number of partitions in which input records are distributed during indexing, thus parallelizing the process. The default value is 2. Use 1 to avoid multiple threads, or higher values for better performance (according to the available hardware).
-- `-s` specifies the minimum partition size when using parallelized indexing (default=100). When the total number of records to be indexed for each document is less than this size, no parallelization will occur.
-- `-l` specifies an artificial limit for the records to be imported. This can be used for test purposes.
-
-Sample:
-
-```ps1
-./pleitool index c:\users\dfusi\desktop\pleiades-profile.json pleiades -t pgsql -c
 ```
 
 ### Validate Geometries Command
@@ -436,13 +456,13 @@ The details about errors (if any) can be found in the log.
 
 Syntax:
 
-```ps1
+```bash
 ./pleitool val-geo <DatabaseName>
 ```
 
 Example:
 
-```ps1
+```bash
 ./pleitool val-geo pleiades
 ```
 
@@ -642,6 +662,9 @@ Here is the tree from the root object:
 
 ## History
 
-- 2023-01-12: upgraded to NET 7.
+- 2023-01-12:
+  - upgraded to NET 7.
+  - refactored CLI to use [Spectre Console](https://spectreconsole.net)
+  - updated packages.
 - 2022-09-18: updated packages.
 - 2021-11-09: upgraded to NET 6.
