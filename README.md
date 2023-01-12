@@ -308,7 +308,7 @@ All these documents will be the source for the list of tokens and occurrences; e
 
 The target ID for all the occurrences is always the place ID (as specified by `placeid AS m_targetid` in all the documents).
 
-## Search
+## Searching
 
 Once you have the database filled with data and text index, you can implement whatever search you want. Here I refer to the essential searches currently implemented in this project.
 
@@ -370,20 +370,18 @@ The import tool is a CLI multi-platform tool, not tied to a specific SQL impleme
 
 🎯 Build a search index on top of imported data.
 
-Syntax:
-
 ```bash
-./pleitool index <JsonFilePath> [-d <DbName>] [-c] [-p <PartitionCount>] [-s <MinPartitionSize>] [-l <RecordLimit>]
+./pleitool index <PROFILE_PATH> [-d <DB_NAME>] [-c] [-p <COUNT>] [-s <SIZE>] [-l <COUNT>]
 ```
 
-- `JsonFilePath` is the path of the JSON profile file for Embix.
-- `DbName` is the target database name. Default=`pleiades`.
+- `PROFILE_PATH` is the path of the JSON profile file for Embix.
+- `DB_NAME` is the target database name. Default=`pleiades`.
 - `-c` tells the initializer to truncate the tables if they are found. Otherwise, the command will create them.
 - `-p` specifies the number of partitions in which input records are distributed during indexing, thus parallelizing the process. Default=2. Use 1 to avoid multiple threads, or higher values for better performance (according to the available hardware resources).
 - `-s` specifies the minimum partition size when using parallelized indexing (default=100). When the total number of records to be indexed for each document is less than this size, no parallelization will occur. Default=100.
 - `-l` specifies an artificial limit for the records to be imported. This can be used for test purposes. Default=0.
 
-Sample:
+Example:
 
 ```bash
 ./pleitool index c:/users/dfusi/desktop/pleiades-profile.json -c
@@ -393,43 +391,57 @@ Sample:
 
 🎯 Build SQL code to query the database, using an interactive interface.
 
-Syntax:
-
 ```bash
 ./pleitool query
 ```
 
-### Scan Graph Command
+### Bulk Export Command
 
-Scan the places graph from the Pleiades JSON file, reporting some metrics about them.
+🎯 Export bulk tables data from the database, to be later used when restoring it via the API startup services.
 
 ```bash
-./pleitool scan-graph <inputFilePath> <outputDir>
+./pleitool export <TARGET_DIR> [-d <DB_NAME>]
 ```
 
-Sample:
+- `TARGET_DIR` is the target directory.
+- `DB_NAME` is the target database name. Default=`pleiades`.
+
+Example:
 
 ```bash
-./pleitool scan-graph c:\users\dfusi\desktop\pleiades-places.json c:\users\dfusi\desktop\pd\
+./pleitool export c:/users/dfusi/desktop/dump
+```
+
+### Create Database Command
+
+🎯 Create a new Pleiades database.
+
+```bash
+./pleitool create-db [-d <DB_NAME>]
+```
+
+- `DB_NAME` is the target database name. Default=`pleiades`.
+
+Example:
+
+```bash
+./pleitool create-db
 ```
 
 ### Import Graph Command
 
-Import the places graph from the Pleiades JSON file into a target database.
+🎯 Import the places graph from the Pleiades JSON file into a target database.
 
 ```bash
-./pleitool scan-graph <inputFilePath> [-d databaseName] [-t databaseType] [-p] [-s SkipCount] [-l Limit] [-f Flags]
+./pleitool import-graph <INPUT_PATH> [-d <DB_NAME>] [-p] [-s <COUNT>] [-l <COUNT>] [-f <COLEARNMT0>]
 ```
 
-Where:
-
-- inputFilePath: the input JSON file path.
+- `INPUT_PATH`: the input JSON file path.
 - `-d` the target database name. Default is `pleiades`.
-- `-t` the database type. Allowed values are `pgsql` (default) or `mysql`.
 - `-p` preflight mode (do not write to database).
 - `-s` the place skip count. Default is 0. If set to a number greater than 0, the first N records will be skipped in the import process.
 - `-l` the place limit count. Default is 0 (=unlimited, import all places).
-- `-f` the import flags: these tell which child nodes of each place should be imported. Each type of child node is represented by a letter, the default value being all children (`FCOLARNMT`):
+- `-f` the import flags: these tell which child nodes of each place should be imported. Each type of child node is represented by a letter, the default value being all children (`FCOLEARNMT`):
   - `F` = features
   - `C` = creators
   - `O` = contributors
@@ -448,22 +460,47 @@ Sample (try with 10 places without writing to DB):
 ./pleitool import-graph c:\users\dfusi\desktop\pleiades-places.json -l 10 -p -t pgsql
 ```
 
-### Validate Geometries Command
+### Populate Spatial Data Command
 
-This is for PostgreSql only. The command validates spatial features imported from Pleiades: place's coordinates and place's features and locations geometries. Validation is purely formal, i.e. we ensure that longitude is between -180 and +180, latitude is between -90 and +90, and GeoJSON when present can be parsed correctly.
-
-The details about errors (if any) can be found in the log.
-
-Syntax:
+🎯 Populate spatial data in the imported database.
 
 ```bash
-./pleitool val-geo <DatabaseName>
+./pleitool pop-spatial[-d <DB_NAME>]
 ```
+
+- `DB_NAME` is the target database name. Default=`pleiades`.
+
+### Scan Graph Command
+
+🎯 Scan the places graph from the Pleiades JSON file, reporting some metrics about them.
+
+```bash
+./pleitool scan-graph <INPUT_PATH> <OUTPUT_DIR>
+```
+
+- `INPUT_PATH` is the input Pleiades JSON file path.
+- `OUTPUT_DIR` is the output directory.
 
 Example:
 
 ```bash
-./pleitool val-geo pleiades
+./pleitool scan-graph c:/users/dfusi/desktop/pleiades-places.json c:/users/dfusi/desktop/pd
+```
+
+### Validate Geometries Command
+
+🎯 Validate spatial features imported from Pleiades: place's coordinates and place's features and locations geometries. Validation is purely formal, i.e. we ensure that longitude is between -180 and +180, latitude is between -90 and +90, and GeoJSON when present can be parsed correctly. Details about errors (if any) can be found in the log.
+
+```bash
+./pleitool val-geo [-d DB_NAME]
+```
+
+- `DB_NAME` is the target database name. Default=`pleiades`.
+
+Example:
+
+```bash
+./pleitool val-geo
 ```
 
 ## Pleiades Overview

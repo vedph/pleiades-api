@@ -163,11 +163,11 @@ internal class ImportGraphCommandSettings : CommandSettings
     [CommandOption("-p|--preflight|--dry")]
     public bool IsDry { get; set; }
 
-    [CommandOption("-s|--skip <VALUE>")]
+    [CommandOption("-s|--skip <COUNT>")]
     [DefaultValue(0)]
     public int SkipCount { get; set; }
 
-    [CommandOption("-l|--limit <VALUE>")]
+    [CommandOption("-l|--limit <COUNT>")]
     [DefaultValue(0)]
     public int Limit { get; set; }
 

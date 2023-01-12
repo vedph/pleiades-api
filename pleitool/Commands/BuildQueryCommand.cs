@@ -29,7 +29,7 @@ internal sealed class BuildQueryCommand : AsyncCommand
     private static IList<double> PromptForLonLat(string message,
         string defaultValue, string resetValue = "/")
     {
-        Regex nRegex = new Regex(@"(-?[0-9]+(?:\.[0-9]+))", RegexOptions.Compiled);
+        Regex nRegex = new Regex(@"(-?[0-9]+(?:\.[0-9]+)?)", RegexOptions.Compiled);
         string value;
 
         while (true)
@@ -129,7 +129,7 @@ internal sealed class BuildQueryCommand : AsyncCommand
             ? null : new SearchRequestPoint(lonLat[0], lonLat[1]);
 
         _request.Spatial!.IsBBoxContainer = AnsiConsole.Confirm(
-            $"BBox is container? [{_request.Spatial.IsBBoxContainer}]");
+            $"BBox is container? ({_request.Spatial.IsBBoxContainer})");
     }
 
     private void GetOptions()
