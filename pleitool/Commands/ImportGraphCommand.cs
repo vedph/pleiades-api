@@ -20,7 +20,7 @@ internal sealed class ImportGraphCommand : AsyncCommand<ImportGraphCommandSettin
 {
     private static PlaceChildFlags ParseFlags(string? text)
     {
-        if (string.IsNullOrEmpty(text)) return 0;
+        if (string.IsNullOrEmpty(text)) return PlaceChildFlags.All;
         PlaceChildFlags flags = 0;
 
         foreach (char c in text.ToUpperInvariant())
@@ -128,23 +128,19 @@ internal sealed class ImportGraphCommand : AsyncCommand<ImportGraphCommandSettin
                 adapter)
             {
                 Logger = CliAppContext.Logger,
-                IsPreflight = settings.IsDry,
+                IsDry = settings.IsDry,
                 Skip = settings.SkipCount,
                 Limit = settings.Limit,
                 ImportFlags = ParseFlags(settings.Flags)
             };
 
-            int count = 0, oldPercent = 0;
+            int count = 0;
             AnsiConsole.Progress().Start(ctx =>
             {
                 var task = ctx.AddTask("Importing");
                 count = importer.Import(CancellationToken.None,
                     new Progress<ProgressReport>(
-                        report =>
-                        {
-                            task.Increment(report.Percent - oldPercent);
-                            oldPercent = report.Percent;
-                        }));
+                        report => task.Value = report.Percent));
             });
 
             AnsiConsole.MarkupLine($"Places imported: [cyan]{count}[/]");

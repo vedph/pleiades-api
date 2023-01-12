@@ -265,8 +265,8 @@ public sealed class EfPlaceAdapter
 
         if (location.Contributors?.Count > 0)
         {
-            if (ef.Authors == null)
-                ef.Authors = new List<EfLocationAuthorLink>();
+            ef.Authors ??= new List<EfLocationAuthorLink>();
+
             foreach (var author in location.Contributors)
             {
                 var efa = GetAuthor(author);
@@ -559,7 +559,7 @@ public sealed class EfPlaceAdapter
                 // place connections require both source and target place
                 // to be already present in the DB. Here we just defer
                 // the place lookup, returning a pending link for each connection
-                links.Add(GetLinkForConnection(connection, source.Id));
+                links.Add(GetLinkForConnection(connection, source.Id!));
             }
         }
 
@@ -613,7 +613,7 @@ public sealed class EfPlaceAdapter
                 if (source.TargetUris.IndexOf(uri, 0, i) > -1)
                     continue;
 
-                links.Add(GetPendingLink(source.Id, uri));
+                links.Add(GetPendingLink(source.Id!, uri));
                 i++;
             }
         }
@@ -628,16 +628,16 @@ public sealed class EfPlaceAdapter
 public enum PlaceChildFlags
 {
     None = 0,
-    Features,
-    Creators,
-    Contributors,
-    Locations,
-    Connections,
-    Attestations,
-    References,
-    Names,
-    Metadata,
-    TargetUris,
+    Features = 0x001,
+    Creators = 0x002,
+    Contributors = 0x004,
+    Locations = 0x008,
+    Connections = 0x010,
+    Attestations = 0x020,
+    References = 0x040,
+    Names = 0x080,
+    Metadata = 0x100,
+    TargetUris = 0x200,
     All = Features | Creators | Contributors | Locations | Connections
         | Attestations | References | Names | Metadata | TargetUris
 }

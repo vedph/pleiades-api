@@ -23,17 +23,13 @@ internal sealed class ValidateGeoCommand : AsyncCommand<ValidateGeoCommandSettin
             settings.DbName),
             CliAppContext.Logger);
 
-        int errors = 0, oldPercent = 0;
+        int errors = 0;
         AnsiConsole.Progress().Start(ctx =>
         {
             var task = ctx.AddTask("Validating");
             errors = validator.Validate(CancellationToken.None,
                 new Progress<ProgressReport>(
-                    report =>
-                    {
-                        task.Increment(report.Percent - oldPercent);
-                        oldPercent = report.Percent;
-                    }));
+                    report => task.Value(report.Percent)));
         });
 
         if (errors > 0)

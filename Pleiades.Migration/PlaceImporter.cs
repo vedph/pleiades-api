@@ -30,10 +30,10 @@ public sealed class PlaceImporter
 
     /// <summary>
     /// Gets or sets a value indicating whether this importer should
-    /// work in preflight mode. In this mode, no data is written to the
+    /// work in dry mode. In this mode, no data is written to the
     /// database.
     /// </summary>
-    public bool IsPreflight { get; set; }
+    public bool IsDry { get; set; }
 
     /// <summary>
     /// Gets or sets the count of initial places to skip in import.
@@ -145,14 +145,14 @@ public sealed class PlaceImporter
             foreach (var link in t.Item2) AddPending(link);
             ResolvePendingFrom(place);
 
-            if (!IsPreflight) _writer.WritePlace(t.Item1);
+            if (!IsDry) _writer.WritePlace(t.Item1);
 
             // cancellation
             if (cancel.IsCancellationRequested) break;
         }
 
         // lookup, connections and links
-        if (!IsPreflight)
+        if (!IsDry)
         {
             _writer.Flush();
             _writer.WriteLookups(_reader.LookupSet.GetLookups()
