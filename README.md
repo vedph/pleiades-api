@@ -642,5 +642,6 @@ Here is the tree from the root object:
 
 ## History
 
+- 2023-01-12: upgraded to NET 7.
 - 2022-09-18: updated packages.
 - 2021-11-09: upgraded to NET 6.
