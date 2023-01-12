@@ -1,10 +1,9 @@
 ﻿using Pleiades.Core;
 using System.Collections.Generic;
 
-namespace Pleiades.Ef
+namespace Pleiades.Ef;
+
+public sealed class EfToken : Token
 {
-    public sealed class EfToken : Token
-    {
-        public List<EfOccurrence> Occurrences { get; set; }
-    }
+    public List<EfOccurrence>? Occurrences { get; set; }
 }

@@ -8,78 +8,77 @@ using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PleiadesApi.Services
+namespace PleiadesApi.Services;
+
+/// <summary>
+/// Database initializer extension to <see cref="IHost"/>.
+/// See https://stackoverflow.com/questions/45148389/how-to-seed-in-entity-framework-core-2.
+/// </summary>
+public static class HostSeedExtensions
 {
-    /// <summary>
-    /// Database initializer extension to <see cref="IHost"/>.
-    /// See https://stackoverflow.com/questions/45148389/how-to-seed-in-entity-framework-core-2.
-    /// </summary>
-    public static class HostSeedExtensions
+    private static Task SeedAsync(IServiceProvider serviceProvider)
     {
-        private static Task SeedAsync(IServiceProvider serviceProvider)
+        ApplicationDatabaseInitializer initializer =
+            new(serviceProvider);
+
+        return Policy.Handle<DbException>()
+            .WaitAndRetry(new[]
+            {
+                TimeSpan.FromSeconds(10),
+                TimeSpan.FromSeconds(30),
+                TimeSpan.FromSeconds(60)
+            }, (exception, timeSpan, _) =>
+            {
+                ILogger logger = serviceProvider
+                    .GetService<ILoggerFactory>()!
+                    .CreateLogger(typeof(HostSeedExtensions));
+
+                string message = "Unable to connect to DB" +
+                    $" (sleep {timeSpan}): {exception.Message}";
+                Console.WriteLine(message);
+                logger.LogError(exception, message);
+            }).Execute(async () =>
+            {
+                await initializer.SeedAsync();
+            });
+    }
+
+    /// <summary>
+    /// Seeds the database.
+    /// </summary>
+    /// <param name="host">The host.</param>
+    /// <returns>The received host, to allow concatenation.</returns>
+    /// <exception cref="ArgumentNullException">serviceProvider</exception>
+    public static async Task<IHost> SeedAsync(this IHost host)
+    {
+        using var scope = host.Services.CreateScope();
+        IServiceProvider serviceProvider = scope.ServiceProvider;
+        ILogger logger = serviceProvider
+            .GetService<ILoggerFactory>()!
+            .CreateLogger(typeof(HostSeedExtensions));
+
+        try
         {
-            ApplicationDatabaseInitializer initializer =
-                new(serviceProvider);
+            IConfiguration config =
+                serviceProvider.GetService<IConfiguration>()!;
 
-            return Policy.Handle<DbException>()
-                .WaitAndRetry(new[]
-                {
-                    TimeSpan.FromSeconds(10),
-                    TimeSpan.FromSeconds(30),
-                    TimeSpan.FromSeconds(60)
-                }, (exception, timeSpan, _) =>
-                {
-                    ILogger logger = serviceProvider
-                        .GetService<ILoggerFactory>()
-                        .CreateLogger(typeof(HostSeedExtensions));
+            int delay = config.GetValue<int>("SeedDelay");
+            if (delay > 0)
+            {
+                logger.LogInformation($"Waiting {delay} seconds...");
+                Thread.Sleep(delay * 1000);
+            }
 
-                    string message = "Unable to connect to DB" +
-                        $" (sleep {timeSpan}): {exception.Message}";
-                    Console.WriteLine(message);
-                    logger.LogError(exception, message);
-                }).Execute(async () =>
-                {
-                    await initializer.SeedAsync();
-                });
+            //IHostEnvironment environment =
+            //    serviceProvider.GetService<IHostEnvironment>();
+
+            await SeedAsync(serviceProvider);
+            return host;
         }
-
-        /// <summary>
-        /// Seeds the database.
-        /// </summary>
-        /// <param name="host">The host.</param>
-        /// <returns>The received host, to allow concatenation.</returns>
-        /// <exception cref="ArgumentNullException">serviceProvider</exception>
-        public static async Task<IHost> SeedAsync(this IHost host)
+        catch (Exception ex)
         {
-            using var scope = host.Services.CreateScope();
-            IServiceProvider serviceProvider = scope.ServiceProvider;
-            ILogger logger = serviceProvider
-                .GetService<ILoggerFactory>()
-                .CreateLogger(typeof(HostSeedExtensions));
-
-            try
-            {
-                IConfiguration config =
-                    serviceProvider.GetService<IConfiguration>();
-
-                int delay = config.GetValue<int>("SeedDelay");
-                if (delay > 0)
-                {
-                    logger.LogInformation($"Waiting {delay} seconds...");
-                    Thread.Sleep(delay * 1000);
-                }
-
-                //IHostEnvironment environment =
-                //    serviceProvider.GetService<IHostEnvironment>();
-
-                await SeedAsync(serviceProvider);
-                return host;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, ex.Message);
-                throw;
-            }
+            logger.LogError(ex, ex.Message);
+            throw;
         }
     }
 }

@@ -1,120 +1,85 @@
-﻿using Microsoft.Extensions.CommandLineUtils;
-using Microsoft.Extensions.Logging;
+﻿using Pleiades.Cli.Services;
 using Pleiades.Core;
 using Pleiades.Migration;
+using Spectre.Console;
+using Spectre.Console.Cli;
 using System;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Pleiades.Tool.Commands
+namespace Pleiades.Cli.Commands;
+
+internal sealed class ScanGraphCommand : AsyncCommand<ScanGraphCommandSettings>
 {
-    public sealed class ScanGraphCommand : ICommand
+    private static void WriteReport(JsonPlaceReader reader,
+        PlaceMetrics metrics, TextWriter writer)
     {
-        private readonly string _inputFile;
-        private readonly string _outputDir;
+        writer.WriteLine("#places\t\t");
+        writer.WriteLine($"total\t{reader.Position}");
 
-        public ILogger Logger { get; set; }
-
-        public ScanGraphCommand(string inputFile, string outputDir)
+        writer.WriteLine("#lookups\t\t");
+        foreach (var lookup in reader.LookupSet.GetLookups()
+            .OrderBy(p => p.FullName))
         {
-            _inputFile = inputFile
-                ?? throw new ArgumentNullException(nameof(inputFile));
-            _outputDir = outputDir
-                ?? throw new ArgumentNullException(nameof(outputDir));
+            writer.WriteLine($"{lookup.FullName}\t{lookup.Id}\t{lookup.ShortName}");
         }
 
-        public static void Configure(CommandLineApplication command,
-            AppOptions options)
+        writer.WriteLine("#strings\t\t");
+        foreach (var pair in metrics.Data.OrderBy(p => p.Key))
         {
-            command.Description = "Scan graph nodes from a Pleiades JSON file " +
-                "saving observations into the specified output directory.";
-            command.HelpOption("-?|-h|--help");
+            if (pair.Value.IsNullable)
+                writer.WriteLine($"{pair.Key}:nul\t1\t");
 
-            CommandArgument inputArgument = command.Argument("[input]",
-                "The input JSON file path");
-
-            CommandArgument outputArgument = command.Argument("[output]",
-                "The output directory");
-
-            command.OnExecute(() =>
-            {
-                options.Command = new ScanGraphCommand(
-                    inputArgument.Value,
-                    outputArgument.Value)
-                {
-                    Logger = options.Logger
-                };
-
-                return 0;
-            });
-        }
-
-        private static void WriteReport(JsonPlaceReader reader,
-            PlaceMetrics metrics, TextWriter writer)
-        {
-            writer.WriteLine("#places\t\t");
-            writer.WriteLine($"total\t{reader.Position}");
-
-            writer.WriteLine("#lookups\t\t");
-            foreach (var lookup in reader.LookupSet.GetLookups()
-                .OrderBy(p => p.FullName))
-            {
-                writer.WriteLine($"{lookup.FullName}\t{lookup.Id}\t{lookup.ShortName}");
-            }
-
-            writer.WriteLine("#strings\t\t");
-            foreach (var pair in metrics.Data.OrderBy(p => p.Key))
-            {
-                if (pair.Value.IsNullable)
-                    writer.WriteLine($"{pair.Key}:nul\t1\t");
-
-                if (pair.Value.MinLength > -1)
-                    writer.WriteLine($"{pair.Key}:min\t{pair.Value.MinLength}\t");
-                if (pair.Value.MaxLength > -1)
-                    writer.WriteLine($"{pair.Key}:max\t{pair.Value.MaxLength}\t");
-            }
-        }
-
-        public Task Run()
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("\nSCAN GRAPH FROM JSON FILE\n");
-            Console.ResetColor();
-
-            Console.WriteLine($"Input JSON file: {_inputFile}\n" +
-                              $"Output directory: {_outputDir}\n");
-
-            if (!Directory.Exists(_outputDir)) Directory.CreateDirectory(_outputDir);
-
-            PlaceMetrics metrics = new();
-
-            using (Stream stream = new FileStream(_inputFile, FileMode.Open,
-                FileAccess.Read, FileShare.Read))
-            {
-                JsonPlaceReader reader = new(stream, null)
-                {
-                    Logger = Logger
-                };
-                Place place;
-                while ((place = reader.Read()) != null)
-                {
-                    metrics.Update(place);
-                    Console.WriteLine(place);
-                }
-                Console.WriteLine("Places read: " + reader.Position);
-
-                using (StreamWriter writer = new(
-                    Path.Combine(_outputDir, "pl-report.tsv"), false,
-                    Encoding.UTF8))
-                {
-                    WriteReport(reader, metrics, writer);
-                    writer.Flush();
-                }
-            }
-
-            return Task.CompletedTask;
+            if (pair.Value.MinLength > -1)
+                writer.WriteLine($"{pair.Key}:min\t{pair.Value.MinLength}\t");
+            if (pair.Value.MaxLength > -1)
+                writer.WriteLine($"{pair.Key}:max\t{pair.Value.MaxLength}\t");
         }
     }
+
+    public override Task<int> ExecuteAsync(CommandContext context, ScanGraphCommandSettings settings)
+    {
+        AnsiConsole.Markup("[green]SCAN GRAPH FROM JSON FILE[/]");
+        AnsiConsole.Markup($"Input JSON file: [cyan]{settings.InputPath}[/]");
+        AnsiConsole.Markup($": [cyan]{settings.OutputDir}[/]");
+
+        if (!Directory.Exists(settings.OutputDir))
+            Directory.CreateDirectory(settings.OutputDir!);
+
+        PlaceMetrics metrics = new();
+
+        using (Stream stream = new FileStream(settings.InputPath!, FileMode.Open,
+            FileAccess.Read, FileShare.Read))
+        {
+            JsonPlaceReader reader = new(stream, null)
+            {
+                Logger = CliAppContext.Logger
+            };
+            Place? place;
+            while ((place = reader.Read()) != null)
+            {
+                metrics.Update(place);
+                Console.WriteLine(place);
+            }
+            Console.WriteLine("Places read: " + reader.Position);
+
+            using StreamWriter writer = new(
+                Path.Combine(settings.OutputDir ?? "", "pl-report.tsv"), false,
+                Encoding.UTF8);
+            WriteReport(reader, metrics, writer);
+            writer.Flush();
+        }
+
+        return Task.FromResult(0);
+    }
+}
+
+internal class ScanGraphCommandSettings : CommandSettings
+{
+    [CommandArgument(0, "<INPUT_PATH>")]
+    public string? InputPath { get; set; }
+    [CommandArgument(1, "<OUTPUT_DIR>")]
+    public string? OutputDir { get; set; }
 }

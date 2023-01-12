@@ -1,236 +1,188 @@
 ﻿using Fusi.DbManager;
 using Fusi.DbManager.PgSql;
 using Fusi.Tools;
-using Microsoft.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+using Pleiades.Cli.Services;
 using Pleiades.Ef;
 using Pleiades.Ef.PgSql;
 using Pleiades.Migration;
-using Pleiades.Tool.Services;
-using ShellProgressBar;
+using Spectre.Console;
+using Spectre.Console.Cli;
 using System;
-using System.Globalization;
+using System.ComponentModel;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Pleiades.Tool.Commands
+namespace Pleiades.Cli.Commands;
+
+internal sealed class ImportGraphCommand : AsyncCommand<ImportGraphCommandSettings>
 {
-    public sealed class ImportGraphCommand : ICommand
+    private static PlaceChildFlags ParseFlags(string? text)
     {
-        private readonly IConfiguration _config;
-        private readonly string _inputFile;
-        private readonly string _dbName;
-        private readonly bool _preflight;
-        private readonly int _skip;
-        private readonly int _limit;
-        private readonly PlaceChildFlags _flags;
-        private readonly string _connection;
+        if (string.IsNullOrEmpty(text)) return 0;
+        PlaceChildFlags flags = 0;
 
-        public ILogger Logger { get; set; }
-
-        public ImportGraphCommand(AppOptions options, string inputFile,
-            string dbName, bool preflight, string flags, int skip, int limit)
+        foreach (char c in text.ToUpperInvariant())
         {
-            _config = options.Configuration;
-            _inputFile = inputFile;
-            _dbName = dbName ?? "pleiades";
-            _preflight = preflight;
-            _skip = skip;
-            _limit = limit;
-            _flags = flags != null? ParseFlags(flags) : PlaceChildFlags.All;
-            _connection = string.Format(CultureInfo.InvariantCulture,
-                _config.GetConnectionString("Default"),
-                _dbName);
-        }
-
-        private static PlaceChildFlags ParseFlags(string text)
-        {
-            PlaceChildFlags flags = 0;
-
-            foreach (char c in text.ToUpperInvariant())
+            switch (c)
             {
-                switch (c)
-                {
-                    case 'F':
-                        flags |= PlaceChildFlags.Features;
-                        break;
-                    case 'C':
-                        flags |= PlaceChildFlags.Connections;
-                        break;
-                    case 'O':
-                        flags |= PlaceChildFlags.Contributors;
-                        break;
-                    case 'L':
-                        flags |= PlaceChildFlags.Locations;
-                        break;
-                    case 'E':
-                        flags |= PlaceChildFlags.Connections;
-                        break;
-                    case 'A':
-                        flags |= PlaceChildFlags.Attestations;
-                        break;
-                    case 'R':
-                        flags |= PlaceChildFlags.References;
-                        break;
-                    case 'N':
-                        flags |= PlaceChildFlags.Names;
-                        break;
-                    case 'M':
-                        flags |= PlaceChildFlags.Metadata;
-                        break;
-                    case 'T':
-                        flags |= PlaceChildFlags.TargetUris;
-                        break;
-                    case '0':
-                        flags = 0;
-                        break;
-                }
+                case 'F':
+                    flags |= PlaceChildFlags.Features;
+                    break;
+                case 'C':
+                    flags |= PlaceChildFlags.Connections;
+                    break;
+                case 'O':
+                    flags |= PlaceChildFlags.Contributors;
+                    break;
+                case 'L':
+                    flags |= PlaceChildFlags.Locations;
+                    break;
+                case 'E':
+                    flags |= PlaceChildFlags.Connections;
+                    break;
+                case 'A':
+                    flags |= PlaceChildFlags.Attestations;
+                    break;
+                case 'R':
+                    flags |= PlaceChildFlags.References;
+                    break;
+                case 'N':
+                    flags |= PlaceChildFlags.Names;
+                    break;
+                case 'M':
+                    flags |= PlaceChildFlags.Metadata;
+                    break;
+                case 'T':
+                    flags |= PlaceChildFlags.TargetUris;
+                    break;
+                case '0':
+                    flags = 0;
+                    break;
             }
-            return flags;
         }
+        return flags;
+    }
 
-        public static void Configure(CommandLineApplication command,
-            AppOptions options)
+    public override Task<int> ExecuteAsync(CommandContext context,
+        ImportGraphCommandSettings settings)
+    {
+        AnsiConsole.MarkupLine("[red]IMPORT JSON DATASET[/]");
+        AnsiConsole.MarkupLine($"Input file: [cyan]{settings.InputPath}[/]");
+        AnsiConsole.MarkupLine($"Database: [cyan]{settings.DbName}[/]");
+        if (settings.SkipCount > 0)
+            AnsiConsole.MarkupLine($"Skip: [cyan]{settings.SkipCount}[/]");
+        if (settings.Limit > 0)
+            AnsiConsole.MarkupLine($"Limit: [cyan]{settings.Limit}[/]");
+        if (settings.IsDry)
+            AnsiConsole.MarkupLine($"Dry: [cyan]{settings.IsDry}[/]");
+
+        string csTemplate = CliAppContext.Configuration
+            .GetConnectionString("Default")!;
+
+        // create database if not exists
+        if (!settings.IsDry)
         {
-            if (command == null)
-                throw new ArgumentNullException(nameof(command));
-
-            command.Description = "Import Pleiades dataset from JSON file";
-            command.HelpOption("-?|-h|--help");
-
-            CommandArgument inputArgument = command.Argument("[input-path]",
-                "The input JSON file path");
-
-            CommandOption dbNameOption = command.Option("-d|--database",
-                "Database name",
-                CommandOptionType.SingleValue);
-
-            CommandOption preflightOption = command.Option("-p|--preflight",
-                "Preflight mode -- dont' write data to DB",
-                CommandOptionType.NoValue);
-
-            CommandOption skipOption = command.Option("-s|--skip",
-                "Skip the first N places in import",
-                CommandOptionType.SingleValue);
-
-            CommandOption limitOption = command.Option("-l|--limit",
-                "Limit import to the first N places",
-                CommandOptionType.SingleValue);
-
-            CommandOption flagsOption = command.Option("-f|--flags",
-                "Import only the specified place children: " +
-                "[F]eatures [C]reators c[O]ntributors [L]ocations " +
-                "conn[E]ctions [A]ttestations [R]eferences [N]ames " +
-                "[M]etadata [T]argetURIs [0]=none",
-                CommandOptionType.SingleValue);
-
-            command.OnExecute(() =>
+            AnsiConsole.Status().Start("Setup database...", ctx =>
             {
-                int skip = 0;
-                if (skipOption.HasValue()
-                    && int.TryParse(skipOption.Value(), out int ns))
+                IDbManager manager = new PgSqlDbManager(csTemplate);
+
+                if (manager.Exists(settings.DbName))
                 {
-                    skip = ns;
-                }
-
-                int limit = 0;
-                if (limitOption.HasValue()
-                    && int.TryParse(limitOption.Value(), out int nl))
-                {
-                    limit = nl;
-                }
-
-                options.Command = new ImportGraphCommand(
-                    options,
-                    inputArgument.Value,
-                    dbNameOption.Value(),
-                    preflightOption.HasValue(),
-                    flagsOption.HasValue()? flagsOption.Value() : null,
-                    skip,
-                    limit);
-                return 0;
-            });
-        }
-
-        public Task Run()
-        {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("\nIMPORT JSON DATASET\n");
-            Console.ResetColor();
-            Console.WriteLine(
-                $"Input file: {_inputFile}\n" +
-                $"Database name: {_dbName}\n" +
-                $"Preflight: {_preflight}\n" +
-                $"Flags: {_flags}");
-            if (_skip > 0) Console.WriteLine("Skip: " + _skip);
-            if (_limit > 0) Console.WriteLine("Limit: " + _limit);
-            Console.WriteLine();
-
-            // create database if not exists
-            if (!_preflight)
-            {
-                string connection = _config.GetConnectionString("Default");
-                IDbManager manager = new PgSqlDbManager(connection);
-                if (manager.Exists(_dbName))
-                {
-                    Console.Write($"Clearing {_dbName}...");
-                    manager.ClearDatabase(_dbName);
-                    Console.WriteLine(" done");
+                    ctx.Status($"Clearing {settings.DbName}...");
+                    ctx.Spinner(Spinner.Known.Star);
+                    manager.ClearDatabase(settings.DbName);
                 }
                 else
                 {
-                    Console.Write($"Creating {_dbName}...");
-                    manager.CreateDatabase(_dbName,
+                    ctx.Status($"Creating {settings.DbName}...");
+                    ctx.Spinner(Spinner.Known.Star);
+                    manager.CreateDatabase(settings.DbName,
                         PleiadesDbSchema.Get(), null);
-                    Console.WriteLine(" done");
                 }
-            }
-
-            using (ProgressBar progressBar = new(100,
-                $"Importing from {_inputFile}...",
-                new ProgressBarOptions
-                {
-                    EnableTaskBarProgress = true
-                }))
-            using (Stream stream = new FileStream(_inputFile, FileMode.Open,
-                FileAccess.Read, FileShare.Read))
-            {
-                JsonPlaceReader reader = new(stream, null)
-                {
-                    Logger = Logger
-                };
-                EfPlaceAdapter adapter = new(reader.LookupSet);
-
-                IPleiadesContextFactory contextFactory =
-                    new PgSqlPleiadesContextFactory(_connection);
-
-                using EfPleiadesWriter writer = new(contextFactory)
-                {
-                    Logger = Logger
-                };
-
-                PlaceImporter importer = new(
-                    reader,
-                    writer,
-                    adapter)
-                {
-                    Logger = Logger,
-                    IsPreflight = _preflight,
-                    Skip = _skip,
-                    Limit = _limit,
-                    ImportFlags = _flags
-                };
-                int count = importer.Import(CancellationToken.None,
-                    new Progress<ProgressReport>(
-                        r => progressBar.Tick(r.Percent, r.Message)));
-
-                Console.WriteLine("\n\n\nPlaces imported: " + count);
-                Console.WriteLine("Places read: " + reader.Position);
-            }
-
-            return Task.CompletedTask;
+            });
         }
+
+        using (Stream stream = new FileStream(settings.InputPath!, FileMode.Open,
+            FileAccess.Read, FileShare.Read))
+        {
+            JsonPlaceReader reader = new(stream, null)
+            {
+                Logger = CliAppContext.Logger
+            };
+            EfPlaceAdapter adapter = new(reader.LookupSet);
+
+            string cs = string.Format(csTemplate, settings.DbName);
+            IPleiadesContextFactory contextFactory =
+                new PgSqlPleiadesContextFactory(cs);
+
+            using EfPleiadesWriter writer = new(contextFactory)
+            {
+                Logger = CliAppContext.Logger
+            };
+
+            PlaceImporter importer = new(
+                reader,
+                writer,
+                adapter)
+            {
+                Logger = CliAppContext.Logger,
+                IsPreflight = settings.IsDry,
+                Skip = settings.SkipCount,
+                Limit = settings.Limit,
+                ImportFlags = ParseFlags(settings.Flags)
+            };
+
+            int count = 0, oldPercent = 0;
+            AnsiConsole.Progress().Start(ctx =>
+            {
+                var task = ctx.AddTask("Importing");
+                count = importer.Import(CancellationToken.None,
+                    new Progress<ProgressReport>(
+                        report =>
+                        {
+                            task.Increment(report.Percent - oldPercent);
+                            oldPercent = report.Percent;
+                        }));
+            });
+
+            AnsiConsole.MarkupLine($"Places imported: [cyan]{count}[/]");
+            AnsiConsole.MarkupLine($"Places read    : [cyan]{reader.Position}[/]");
+        }
+
+        return Task.FromResult(0);
+    }
+}
+
+internal class ImportGraphCommandSettings : CommandSettings
+{
+    [CommandArgument(0, "<INPUT_PATH>")]
+    public string? InputPath { get; set; }
+
+    [CommandOption("-d|--db <NAME>")]
+    [DefaultValue("pleiades")]
+    public string DbName { get; set; }
+
+    [CommandOption("-p|--preflight|--dry")]
+    public bool IsDry { get; set; }
+
+    [CommandOption("-s|--skip <VALUE>")]
+    [DefaultValue(0)]
+    public int SkipCount { get; set; }
+
+    [CommandOption("-l|--limit <VALUE>")]
+    [DefaultValue(0)]
+    public int Limit { get; set; }
+
+    /// <summary>
+    /// Gets or sets the flags to import only the specified children.
+    /// </summary>
+    [CommandOption("-f|--flags <COLEARNMT0>")]
+    public string? Flags { get; set; }
+
+    public ImportGraphCommandSettings()
+    {
+        DbName = "pleiades";
     }
 }

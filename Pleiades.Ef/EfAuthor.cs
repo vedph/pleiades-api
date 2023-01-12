@@ -1,12 +1,11 @@
 ﻿using Pleiades.Core;
 
-namespace Pleiades.Ef
+namespace Pleiades.Ef;
+
+/// <summary>
+/// An author or contributor.
+/// </summary>
+/// <seealso cref="Author" />
+public sealed class EfAuthor : Author
 {
-    /// <summary>
-    /// An author or contributor.
-    /// </summary>
-    /// <seealso cref="Author" />
-    public sealed class EfAuthor : Author
-    {
-    }
 }

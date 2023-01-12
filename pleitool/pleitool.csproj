@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
-    <RootNamespace>Pleiades.Tool</RootNamespace>
+    <TargetFramework>net7.0</TargetFramework>
+    <RootNamespace>Pleiades.Cli</RootNamespace>
     <NeutralLanguage>en-US</NeutralLanguage>
     <Company>Fusi</Company>
     <Product></Product>
@@ -11,6 +11,7 @@
     <Copyright>by Daniele Fusi</Copyright>
     <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
     <Description>Pleiades wrapper API CLI tool</Description>
+	<Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -43,23 +44,23 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Embix.PgSql" Version="1.2.0" />
-    <PackageReference Include="Embix.Plugin.Greek" Version="1.2.0" />
-    <PackageReference Include="Fusi.DbManager" Version="2.0.1" />
-    <PackageReference Include="Fusi.DbManager.PgSql" Version="2.0.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.9">
+    <PackageReference Include="Embix.PgSql" Version="1.2.2" />
+    <PackageReference Include="Embix.Plugin.Greek" Version="1.2.2" />
+    <PackageReference Include="Fusi.DbManager" Version="3.0.0" />
+    <PackageReference Include="Fusi.DbManager.PgSql" Version="3.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.CommandLineUtils" Version="1.1.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="6.0.1" />
-    <PackageReference Include="Npgsql" Version="6.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="7.0.0" />
+    <PackageReference Include="Npgsql" Version="7.0.1" />
     <PackageReference Include="Serilog" Version="2.12.0" />
     <PackageReference Include="Serilog.Extensions.Logging" Version="3.1.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
-    <PackageReference Include="ShellProgressBar" Version="5.2.0" />
+    <PackageReference Include="Spectre.Console" Version="0.46.0" />
+    <PackageReference Include="Spectre.Console.Cli" Version="0.46.0" />
   </ItemGroup>
 
 </Project>

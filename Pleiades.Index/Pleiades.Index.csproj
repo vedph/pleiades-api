@@ -1,15 +1,16 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
+	<Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Embix.Core" Version="1.2.0" />
-    <PackageReference Include="Fusi.Text" Version="2.0.0" />
-    <PackageReference Include="Fusi.Tools" Version="2.1.9" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.9" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.9" />
+    <PackageReference Include="Embix.Core" Version="1.2.2" />
+    <PackageReference Include="Fusi.Text" Version="3.0.0" />
+    <PackageReference Include="Fusi.Tools" Version="3.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="7.0.2" />
   </ItemGroup>
 
   <ItemGroup>

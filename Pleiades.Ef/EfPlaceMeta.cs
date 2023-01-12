@@ -1,19 +1,18 @@
-﻿namespace Pleiades.Ef
+﻿namespace Pleiades.Ef;
+
+/// <summary>
+/// Place metadata.
+/// </summary>
+/// <seealso cref="EfMetaBase" />
+public sealed class EfPlaceMeta : EfMetaBase
 {
     /// <summary>
-    /// Place metadata.
+    /// Gets or sets the place identifier.
     /// </summary>
-    /// <seealso cref="EfMetaBase" />
-    public sealed class EfPlaceMeta : EfMetaBase
-    {
-        /// <summary>
-        /// Gets or sets the place identifier.
-        /// </summary>
-        public string PlaceId { get; set; }
+    public string? PlaceId { get; set; }
 
-        /// <summary>
-        /// Gets or sets the place.
-        /// </summary>
-        public EfPlace Place { get; set; }
-    }
+    /// <summary>
+    /// Gets or sets the place.
+    /// </summary>
+    public EfPlace? Place { get; set; }
 }

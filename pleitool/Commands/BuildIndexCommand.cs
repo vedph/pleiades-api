@@ -2,180 +2,127 @@
 using Embix.Core.Config;
 using Embix.PgSql;
 using Fusi.Tools;
-using Microsoft.Extensions.CommandLineUtils;
+using Microsoft.Extensions.Configuration;
 using Npgsql;
+using Pleiades.Cli.Services;
 using Pleiades.Ef.PgSql;
 using Pleiades.Index;
-using ShellProgressBar;
+using Spectre.Console;
+using Spectre.Console.Cli;
 using SqlKata.Compilers;
 using SqlKata.Execution;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Pleiades.Tool.Commands
+namespace Pleiades.Cli.Commands;
+
+// this code is derived from Embix by just replacing some types
+internal sealed class BuildIndexCommand : AsyncCommand<BuildIndexCommandSettings>
 {
-    // this code is derived from Embix by just replacing some types
-    public sealed class BuildIndexCommand : ICommand
+    private static string LoadText(string path)
     {
-        private readonly AppOptions _options;
-        private readonly string _profilePath;
-        private readonly string _dbName;
-        private readonly bool _clear;
-        private readonly int _partitionCount;
-        private readonly int _minPartitionSize;
-        private readonly int _recordLimit;
+        using StreamReader reader = new(path, Encoding.UTF8);
+        return reader.ReadToEnd();
+    }
 
-        public BuildIndexCommand(
-            AppOptions options,
-            string profilePath,
-            string dbName,
-            bool clear,
-            int partitionCount,
-            int minPartitionSize,
-            int recordLimit)
+    public async override Task<int> ExecuteAsync(CommandContext context,
+        BuildIndexCommandSettings settings)
+    {
+        AnsiConsole.MarkupLine("[underline red]BUILD INDEX[/]");
+        AnsiConsole.MarkupLine($"Profile path: [green]{settings.ProfilePath}[/]");
+        AnsiConsole.MarkupLine($"DB name: [green]{settings.DbName}[/]");
+
+        Serilog.Log.Information("BUILD INDEX");
+        string cs = string.Format(
+            CliAppContext.Configuration.GetConnectionString("Default")!,
+            settings.DbName);
+
+        IIndexBuilderFactory factory = new PgSqlPleiadesIndexBuilderFactory(
+            LoadText(settings.ProfilePath!), cs);
+
+        ITableInitializer initializer = new PgSqlPleiadesTableInitializer(
+            new PgSqlDbConnectionFactory(cs));
+
+        PleiadesMetadataSupplier supplier = new(
+            new QueryFactory(new NpgsqlConnection(cs), new PostgresCompiler()));
+
+        initializer.Initialize(settings.IsClearEnabled);
+
+        foreach (string documentId in factory.Profile.GetDocuments()
+            .Select(d => d.Id!))
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
-            _profilePath = profilePath
-                ?? throw new ArgumentNullException(nameof(profilePath));
-            _dbName = dbName ?? throw new ArgumentNullException(nameof(dbName));
-            _clear = clear;
-            _partitionCount = partitionCount;
-            _minPartitionSize = minPartitionSize;
-            _recordLimit = recordLimit;
-        }
+            using IndexBuilder builder = factory.GetBuilder(supplier,
+                CliAppContext.Logger);
+            builder.PartitionCount = settings.PartitionCount;
+            builder.MinPartitionSize = settings.MinPartitionSize;
+            builder.RecordLimit = settings.RecordLimit;
 
-        public static void Configure(CommandLineApplication command,
-            AppOptions options)
-        {
-            command.Description = "Build text index in Pleiades database.";
-            command.HelpOption("-?|-h|--help");
-
-            CommandArgument profilePathArgument = command.Argument("[profilePath]",
-                "The JSON profile file path");
-            CommandArgument dbNameArgument = command.Argument("[dbName]",
-                "The database name");
-
-            CommandOption clearOption = command.Option("-c|--clear",
-                "Clear the index tables in database if present",
-                CommandOptionType.NoValue);
-
-            CommandOption partitionCountOption = command.Option("-p|--partitions",
-                "The number of records partitions used to parallelize indexing " +
-                "(default=2, use 1 for single-threaded indexing)",
-                CommandOptionType.SingleValue);
-
-            CommandOption partitionMinSizeOption = command.Option("-s|--partMinSize",
-                "The minimum partition size when using parallelized indexing " +
-                "(default=100). When the total number of records to be indexed " +
-                "for each document is less than this size, no parallelization " +
-                "will occur.",
-                CommandOptionType.SingleValue);
-
-            CommandOption limitOption = command.Option("-l|--limit",
-                "Set an artificial limit to the records to be indexed (0=none)",
-                CommandOptionType.SingleValue);
-
-            command.OnExecute(() =>
+            await AnsiConsole.Progress().StartAsync(async ctx =>
             {
-                int pc = 2;
-                if (partitionCountOption.HasValue())
-                    int.TryParse(partitionCountOption.Value(), out pc);
-                int ps = 100;
-                if (partitionMinSizeOption.HasValue())
-                    int.TryParse(partitionMinSizeOption.Value(), out ps);
-                int limit = 0;
-                if (limitOption.HasValue())
-                    int.TryParse(limitOption.Value(), out limit);
+                var pt = builder.CalculatePartitionCount(documentId);
+                List<ProgressTask> tasks = new(pt.Item1);
+                for (int i = 0; i < pt.Item1; i++)
+                {
+                    tasks.Add(ctx.AddTask($"partition #{i + 1}"));
+                }
 
-                options.Command = new BuildIndexCommand(
-                    options,
-                    profilePathArgument.Value,
-                    dbNameArgument.Value,
-                    clearOption.HasValue(),
-                    pc, ps,
-                    limit);
-                return 0;
-            });
-        }
-
-        private static string LoadText(string path)
-        {
-            using StreamReader reader = new(path, Encoding.UTF8);
-            return reader.ReadToEnd();
-        }
-
-        public async Task Run()
-        {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("BUILD INDEX\n");
-            Console.ResetColor();
-
-            Console.WriteLine(
-                $"Profile path: {_profilePath}\n" +
-                $"Database name: {_dbName}\n");
-
-            Serilog.Log.Information("BUILD INDEX");
-            IIndexBuilderFactory factory = null;
-            string connString = string.Format(
-                _options.Configuration["ConnectionStrings:Default"], _dbName);
-
-            factory = new PgSqlPleiadesIndexBuilderFactory(
-                LoadText(_profilePath),
-                connString);
-            ITableInitializer initializer = new PgSqlPleiadesTableInitializer(
-                new PgSqlDbConnectionFactory(connString));
-            PleiadesMetadataSupplier supplier = new(
-                new QueryFactory(new NpgsqlConnection(connString),
-                new PostgresCompiler()));
-
-            initializer.Initialize(_clear);
-
-            ProgressBar mainBar = new(100, null, new ProgressBarOptions
-            {
-                DisplayTimeInRealTime = false,
-                EnableTaskBarProgress = true,
-                CollapseWhenFinished = true
-            });
-            Dictionary<string, ChildProgressBar> childBars =
-                new();
-            ProgressBarOptions childOptions = new()
-            {
-                CollapseWhenFinished = true,
-                DisplayTimeInRealTime = false
-            };
-            Regex r = new(@"^\[([^]]+)\]", RegexOptions.Compiled);
-
-            foreach (DocumentDefinition document in factory.Profile.Documents)
-            {
-                using IndexBuilder builder = factory.GetBuilder(supplier,
-                    _options.Logger);
-                builder.PartitionCount = _partitionCount;
-                builder.MinPartitionSize = _minPartitionSize;
-                builder.RecordLimit = _recordLimit;
-
-                await builder.BuildAsync(document.Id, CancellationToken.None,
+                await builder.BuildAsync(documentId, CancellationToken.None,
                     new Progress<ProgressReport>(report =>
                     {
-                        IProgressBar bar = mainBar;
-                        Match m = r.Match(report.Message ?? "");
-                        if (m.Success)
+                        // the index builder provides messages with prefix
+                        // [NNN.DocId] where NNN=partition nr.(1-N)
+                        if (report!.Message?.StartsWith("[",
+                            StringComparison.OrdinalIgnoreCase) == true)
                         {
-                            if (!childBars.ContainsKey(m.Groups[1].Value))
-                            {
-                                childBars[m.Groups[1].Value] =
-                                    mainBar.Spawn(100, m.Groups[1].Value,
-                                    childOptions);
-                            }
-                            bar = childBars[m.Groups[1].Value];
+                            int p = int.Parse(report.Message.AsSpan(1, 3),
+                                CultureInfo.InvariantCulture);
+                            tasks[p - 1].Value = report.Percent;
                         }
-                        bar.Tick(report.Percent, report.Message);
                     }));
-            }
+                });
         }
+        return 0;
+    }
+}
+
+internal class BuildIndexCommandSettings : CommandSettings
+{
+    [CommandArgument(0, "<PROFILE_PATH>")]
+    public string ProfilePath { get; set; }
+
+    [CommandOption("-d|--db <NAME>")]
+    [DefaultValue("pleiades")]
+    public string DbName { get; set; }
+
+    [CommandOption("-c|--clear")]
+    public bool IsClearEnabled { get; set; }
+
+    [CommandOption("-p|--partition <COUNT>")]
+    [DefaultValue(2)]
+    public int PartitionCount { get; set; }
+
+    [CommandOption("-s|--size <SIZE>")]
+    [DefaultValue(100)]
+    public int MinPartitionSize { get; set; }
+
+    [CommandOption("-l|--limit <COUNT>")]
+    [DefaultValue(0)]
+    public int RecordLimit { get; set; }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BuildIndexCommandSettings"/>
+    /// class.
+    /// </summary>
+    public BuildIndexCommandSettings()
+    {
+        ProfilePath = "";
+        DbName = "pleiades";
     }
 }

@@ -4,35 +4,34 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 
-namespace Pleiades.Ef.PgSql
+namespace Pleiades.Ef.PgSql;
+
+/// <summary>
+/// PostgreSql Pleiades table initializer.
+/// </summary>
+/// <seealso cref="PgSqlTableInitializer" />
+public sealed class PgSqlPleiadesTableInitializer : PgSqlTableInitializer
 {
     /// <summary>
-    /// PostgreSql Pleiades table initializer.
+    /// Initializes a new instance of the <see cref="PgSqlPleiadesTableInitializer"/>
+    /// class.
     /// </summary>
-    /// <seealso cref="PgSqlTableInitializer" />
-    public sealed class PgSqlPleiadesTableInitializer : PgSqlTableInitializer
+    /// <param name="factory">The factory.</param>
+    public PgSqlPleiadesTableInitializer(IDbConnectionFactory factory)
+        : base(factory)
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PgSqlPleiadesTableInitializer"/>
-        /// class.
-        /// </summary>
-        /// <param name="factory">The factory.</param>
-        public PgSqlPleiadesTableInitializer(IDbConnectionFactory factory)
-            : base(factory)
-        {
-        }
+    }
 
-        /// <summary>
-        /// Gets the SQL.
-        /// </summary>
-        /// <returns>SQL.</returns>
-        protected override string GetSql()
-        {
-            using StreamReader reader = new(
-                Assembly.GetExecutingAssembly()
-                .GetManifestResourceStream("Pleiades.Ef.PgSql.Assets.Schema.pgsql"),
-                Encoding.UTF8);
-            return reader.ReadToEnd();
-        }
+    /// <summary>
+    /// Gets the SQL.
+    /// </summary>
+    /// <returns>SQL.</returns>
+    protected override string GetSql()
+    {
+        using StreamReader reader = new(
+            Assembly.GetExecutingAssembly()
+            .GetManifestResourceStream("Pleiades.Ef.PgSql.Assets.Schema.pgsql")!,
+            Encoding.UTF8);
+        return reader.ReadToEnd();
     }
 }

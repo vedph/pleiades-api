@@ -1,76 +1,62 @@
 ﻿using Fusi.Tools;
-using Microsoft.Extensions.CommandLineUtils;
+using Microsoft.Extensions.Configuration;
+using Pleiades.Cli.Services;
 using Pleiades.Geo;
-using ShellProgressBar;
+using Spectre.Console;
+using Spectre.Console.Cli;
 using System;
+using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Pleiades.Tool.Commands
+namespace Pleiades.Cli.Commands;
+
+internal sealed class ValidateGeoCommand : AsyncCommand<ValidateGeoCommandSettings>
 {
-    public sealed class ValidateGeoCommand : ICommand
+    public override Task<int> ExecuteAsync(CommandContext context,
+        ValidateGeoCommandSettings settings)
     {
-        private readonly AppOptions _options;
-        private readonly string _dbName;
+        AnsiConsole.MarkupLine("[green]VALIDATE GEO[/]");
 
-        public ValidateGeoCommand(AppOptions options, string dbName)
+        GeoValidator validator = new(
+            string.Format(CliAppContext.Configuration.GetConnectionString("Default")!,
+            settings.DbName),
+            CliAppContext.Logger);
+
+        int errors = 0, oldPercent = 0;
+        AnsiConsole.Progress().Start(ctx =>
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
-            _dbName = dbName ?? throw new ArgumentNullException(nameof(dbName));
-        }
-
-        public static void Configure(CommandLineApplication command,
-            AppOptions options)
-        {
-            command.Description = "Validate geometries in Pleiades database.";
-            command.HelpOption("-?|-h|--help");
-
-            CommandArgument dbNameArgument = command.Argument("[dbName]",
-                "The database name");
-
-            command.OnExecute(() =>
-            {
-                options.Command = new ValidateGeoCommand(
-                    options,
-                    dbNameArgument.Value);
-                return 0;
-            });
-        }
-
-        public Task Run()
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("VALIDATE GEO\n");
-            Console.ResetColor();
-
-            GeoValidator validator = new(
-                string.Format(
-                    _options.Configuration["ConnectionStrings:PgSql"], _dbName),
-                _options.Logger);
-
-            ProgressBar bar = new(100, null, new ProgressBarOptions
-            {
-                DisplayTimeInRealTime = false,
-                EnableTaskBarProgress = true,
-                CollapseWhenFinished = true
-            });
-            int errors = validator.Validate(CancellationToken.None,
+            var task = ctx.AddTask("Validating");
+            errors = validator.Validate(CancellationToken.None,
                 new Progress<ProgressReport>(
-                    report => bar.Tick(report.Percent)));
+                    report =>
+                    {
+                        task.Increment(report.Percent - oldPercent);
+                        oldPercent = report.Percent;
+                    }));
+        });
 
-            if (errors > 0)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.Write("Errors: " + errors);
-                Console.ResetColor();
-                Console.WriteLine();
-            }
-            else
-            {
-                Console.Write("No errors.");
-            }
-
-            return Task.CompletedTask;
+        if (errors > 0)
+        {
+            AnsiConsole.Markup($"[red]Errors: {errors}[/]");
         }
+        else
+        {
+            AnsiConsole.Write("[green]No errors.[/]");
+        }
+
+        return Task.FromResult(0);
+    }
+}
+
+internal class ValidateGeoCommandSettings : CommandSettings
+{
+    [CommandOption("-d|--db <NAME>")]
+    [DefaultValue("pleiades")]
+    public string DbName { get; set; }
+
+    public ValidateGeoCommandSettings()
+    {
+        DbName = "pleiades";
     }
 }

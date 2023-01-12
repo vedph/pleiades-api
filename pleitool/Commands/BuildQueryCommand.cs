@@ -1,284 +1,239 @@
-﻿using Microsoft.Extensions.CommandLineUtils;
-using Pleiades.Search;
-using Pleiades.Tool.Services;
+﻿using Pleiades.Search;
+using Spectre.Console;
+using Spectre.Console.Cli;
 using SqlKata;
 using SqlKata.Compilers;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Pleiades.Tool.Commands
+namespace Pleiades.Cli.Commands;
+
+internal sealed class BuildQueryCommand : AsyncCommand
 {
-    public sealed class BuildQueryCommand : ICommand
+    private readonly QuickSearchBuilder _builder;
+    private readonly Compiler _compiler;
+    private QuickSearchRequest _request;
+
+    public BuildQueryCommand()
     {
-        private readonly QuickSearchBuilder _builder;
-        private readonly Compiler _compiler;
-        private QuickSearchRequest _request;
+        _builder = new QuickSearchBuilder();
+        _compiler = new PostgresCompiler();
+        _request = new QuickSearchRequest();
+    }
 
-        public BuildQueryCommand()
+    private static IList<double> PromptForLonLat(string message,
+        string defaultValue, string resetValue = "/")
+    {
+        Regex nRegex = new Regex(@"(-?[0-9]+(?:\.[0-9]+))", RegexOptions.Compiled);
+        string value;
+
+        while (true)
         {
-            _builder = new QuickSearchBuilder();
-            _compiler = new PostgresCompiler();
-            _request = new QuickSearchRequest();
+            value = AnsiConsole.Prompt(new TextPrompt<string>(message)
+                .DefaultValue(defaultValue));
+            if (value == resetValue) return Array.Empty<double>();
+
+            List<Match> matches = nRegex.Matches(value).ToList();
+            if (matches.Count == 2)
+            {
+                double lon = double.Parse(
+                    value.AsSpan(matches[0].Index, matches[0].Length),
+                    CultureInfo.InvariantCulture);
+                double lat = double.Parse(
+                    value.AsSpan(matches[1].Index, matches[1].Length),
+                    CultureInfo.InvariantCulture);
+
+                if (lon < -180 || lon > 180)
+                    AnsiConsole.MarkupLine("[red]Invalid longitude[/]");
+                else if (lat < -90 || lat > 90)
+                    AnsiConsole.MarkupLine("[red]Invalid latitude[/]");
+                else return new[] { lon, lat };
+            }
+            AnsiConsole.MarkupLine("[red]Invalid point[/]");
+        }
+    }
+
+    private static IList<int> PromptForIntRange(string message,
+        string defaultValue, string resetValue = "/")
+    {
+        Regex nRegex = new Regex("(-?[0-9]+)", RegexOptions.Compiled);
+        string value;
+
+        while (true)
+        {
+            value = AnsiConsole.Prompt(new TextPrompt<string>(message)
+                .DefaultValue(defaultValue));
+            if (value == resetValue) return Array.Empty<int>();
+
+            List<Match> matches = nRegex.Matches(value).ToList();
+            if (matches.Count == 2)
+            {
+                int min = int.Parse(
+                    value.AsSpan(matches[0].Index, matches[0].Length),
+                    CultureInfo.InvariantCulture);
+                int max = int.Parse(
+                    value.AsSpan(matches[1].Index, matches[1].Length),
+                    CultureInfo.InvariantCulture);
+
+                if (min <= max) return new[] { min, max };
+            }
+            AnsiConsole.MarkupLine("[red]Invalid range[/]");
+        }
+    }
+
+    private void GetSpatialOptions()
+    {
+        AnsiConsole.MarkupLine("[underline cyan]Spatial Options[/]");
+
+        _request.Spatial ??= new QuickSearchSpatial();
+
+        // distance pt and min max
+        string current = $"{_request.Spatial.DistancePoint?.Longitude ?? 0}," +
+            $"{_request.Spatial.DistancePoint?.Longitude ?? 0}";
+
+        IList<double> lonLat = PromptForLonLat("Reference point (lon,lat) ",
+            current);
+        _request.Spatial.DistancePoint = lonLat.Count == 0
+            ? null : new SearchRequestPoint(lonLat[0], lonLat[1]);
+
+        current = $"{_request.Spatial?.DistanceMin ?? 0} " +
+            $"{_request.Spatial?.DistanceMax ?? 0}";
+        IList<int> minMax = PromptForIntRange("Distance range (min max)", current);
+        if (minMax.Count == 0)
+        {
+            _request.Spatial!.DistanceMin = 0;
+            _request.Spatial.DistanceMax = 0;
+        }
+        else
+        {
+            _request.Spatial!.DistanceMin = minMax[0];
+            _request.Spatial.DistanceMax = minMax[1];
         }
 
-        public static void Configure(CommandLineApplication command,
-            AppOptions options)
-        {
-            command.Description = "Build PostgreSql for Pleiades quick search.";
-            command.HelpOption("-?|-h|--help");
+        // bbox sw ne and container
+        current = $"{_request.Spatial?.BBoxSwCorner?.Longitude ?? 0} " +
+            $"{_request.Spatial?.BBoxSwCorner?.Longitude ?? 0}";
+        lonLat = PromptForLonLat("BBox SW (lon lat)", current);
+        _request.Spatial!.BBoxSwCorner = lonLat.Count == 0
+            ? null : new SearchRequestPoint(lonLat[0], lonLat[1]);
 
-            command.OnExecute(() =>
-            {
-                options.Command = new BuildQueryCommand();
-                return 0;
-            });
+        current = $"{_request.Spatial?.BBoxNeCorner?.Longitude ?? 0} " +
+            $"{_request.Spatial?.BBoxNeCorner?.Longitude ?? 0}";
+        lonLat = PromptForLonLat("BBox NE (lon,lat)", current);
+        _request.Spatial!.BBoxNeCorner = lonLat.Count == 0
+            ? null : new SearchRequestPoint(lonLat[0], lonLat[1]);
+
+        _request.Spatial!.IsBBoxContainer = AnsiConsole.Confirm(
+            $"BBox is container? [{_request.Spatial.IsBBoxContainer}]");
+    }
+
+    private void GetOptions()
+    {
+        AnsiConsole.MarkupLine("[underline cyan]Options[/]");
+        AnsiConsole.Write(new Panel(_request.ToString()));
+
+        _request.IsMatchAnyEnabled = AnsiConsole.Confirm(
+            $"Match any? [{_request.IsMatchAnyEnabled}]");
+
+        _request.PlaceType = AnsiConsole.Ask<string?>(
+            "Place type (/... or full URI) [{}]: ");
+
+        string current = $"{_request.YearMin} {_request.YearMax}";
+        IList<int> minMax = PromptForIntRange("Year range", current);
+        if (minMax.Count == 0)
+        {
+            _request.YearMin = _request.YearMax = 0;
+        }
+        else
+        {
+            _request.YearMin = (short)minMax[0];
+            _request.YearMax = (short)minMax[1];
         }
 
-        private static char PromptChar(string message)
+        current = $"{_request.RankMin} {_request.RankMax}";
+        minMax = PromptForIntRange("Rank range", current);
+        if (minMax.Count == 0)
         {
-            ColorConsole.WriteEmbeddedColorLine(message);
-            char c = char.ToLowerInvariant(Console.ReadKey(true).KeyChar);
-            Console.WriteLine();
-            return c;
+            _request.RankMin = _request.RankMax = 0;
+        }
+        else
+        {
+            _request.RankMin = (byte)minMax[0];
+            _request.RankMax = (byte)minMax[1];
         }
 
-        private static bool PromptBool(string message, bool defaultValue = false)
+        List<string> scopes = AnsiConsole.Prompt(new MultiSelectionPrompt<string>()
+            .PageSize(10)
+            .Title("Pick scope(s)")
+            .InstructionsText("Use arrows to move and space to toggle")
+            .AddChoices(new[]
+            {
+                "(all)",
+                "plttl",
+                "pldsc",
+                "lcttl",
+                "nmrmz",
+                "nmatt",
+                "nmdsc"
+            }));
+        _request.Scopes = scopes.Any(s => s == "all") ? null : scopes;
+
+        if (AnsiConsole.Ask("Set spatial options?", false)) GetSpatialOptions();
+
+        AnsiConsole.Write(new Panel(_request.ToString()));
+    }
+
+    public override Task<int> ExecuteAsync(CommandContext context)
+    {
+        AnsiConsole.MarkupLine("[underline green]BUILD QUERY[/]");
+
+        while (true)
         {
-            ColorConsole.WriteWarning(
-                message + (defaultValue? " (Y/n)?" : " (y/N)?"));
-            bool result = defaultValue;
-            ConsoleKeyInfo info = Console.ReadKey();
-            if (info.Key == ConsoleKey.Enter || info.Key == ConsoleKey.Escape)
+            try
             {
-                Console.WriteLine(defaultValue ? 'y' : 'n');
-                return defaultValue;
-            }
-
-            switch (char.ToLowerInvariant(info.KeyChar))
-            {
-                case 'y':
-                    result = true;
-                    break;
-                case 'n':
-                    result = false;
-                    break;
-                default:
-                    Console.SetCursorPosition(0, Console.CursorTop);
-                    Console.WriteLine(defaultValue ? 'y' : 'n');
-                    break;
-            }
-            Console.WriteLine();
-
-            return result;
-        }
-
-        private static string PromptString(string message, string defaultValue)
-        {
-            ColorConsole.WriteWarning(message);
-
-            string s = Console.ReadLine();
-            if (string.IsNullOrEmpty(s))
-            {
-                Console.SetCursorPosition(0, Console.CursorTop - 1);
-                Console.WriteLine(defaultValue);
-                return defaultValue;
-            }
-            return s;
-        }
-
-        private static Tuple<int, int> PromptRange(string message,
-            string defaultValue)
-        {
-            ColorConsole.WriteWarning(message);
-            string s = Console.ReadLine();
-            if (string.IsNullOrEmpty(s))
-            {
-                Console.SetCursorPosition(0, Console.CursorTop - 1);
-                Console.WriteLine(defaultValue);
-                return null;
-            }
-
-            Match m = Regex.Match(s, @"^(-?\d+(?:\.\d+)?)?\s+-\s+(-?\d+(?:\.\d+)?)?");
-            if (!m.Success) return null;
-
-            if (!int.TryParse(m.Groups[1].Value, out int a)) a = 0;
-            if (!int.TryParse(m.Groups[2].Value, out int b)) b = 0;
-            return Tuple.Create(a, b);
-        }
-
-        private static Tuple<double, double> PromptPoint(string message,
-            string defaultValue)
-        {
-            ColorConsole.WriteWarning(message);
-            string s = Console.ReadLine();
-            if (string.IsNullOrEmpty(s))
-            {
-                Console.SetCursorPosition(0, Console.CursorTop - 1);
-                Console.WriteLine(defaultValue);
-                return null;
-            }
-
-            Match m = Regex.Match(s, @"^(-?\d+(?:\.\d+)?)?\s*,\s*(-?\d+(?:\.\d+)?)?");
-            if (!m.Success) return null;
-
-            if (!double.TryParse(m.Groups[1].Value, out double a)) a = 0;
-            if (!double.TryParse(m.Groups[2].Value, out double b)) b = 0;
-            return Tuple.Create(a, b);
-        }
-
-        private void GetSpatialOptions()
-        {
-            ColorConsole.WriteWrappedHeader("Spatial Options");
-
-            if (_request.Spatial == null)
-                _request.Spatial = new QuickSearchSpatial();
-
-            // distance pt and min max
-            string current = $"{_request.Spatial.DistancePoint?.Longitude ?? 0}," +
-                $"{_request.Spatial.DistancePoint?.Longitude ?? 0}";
-            Tuple<double, double> pt = PromptPoint("Reference point (lon,lat) " +
-                $"[{current}]: ", current);
-            if (pt != null)
-            {
-                _request.Spatial.DistancePoint =
-                    new SearchRequestPoint(pt.Item1, pt.Item2);
-            }
-
-            current = $"{_request.Spatial?.DistanceMin ?? 0} - " +
-                $"{_request.Spatial?.DistanceMax ?? 0}";
-            Tuple<int, int> dst = PromptRange("Distance range (min - max) " +
-                $"[{current}]: ", current);
-            if (dst != null)
-            {
-                _request.Spatial.DistanceMin = dst.Item1;
-                _request.Spatial.DistanceMax = dst.Item2;
-            }
-
-            // bbox sw ne and container
-            current = $"{_request.Spatial?.BBoxSwCorner?.Longitude ?? 0}," +
-                $"{_request.Spatial?.BBoxSwCorner?.Longitude ?? 0}";
-            pt = PromptPoint($"Bbox SW (lon,lat) [{current}]: ", current);
-            if (pt != null)
-            {
-                _request.Spatial.BBoxSwCorner =
-                    new SearchRequestPoint(pt.Item1, pt.Item2);
-            }
-
-            current = $"{_request.Spatial?.BBoxNeCorner?.Longitude ?? 0}," +
-                $"{_request.Spatial?.BBoxNeCorner?.Longitude ?? 0}";
-            pt = PromptPoint($"Bbox NE (lon,lat) [{current}]: ", current);
-            if (pt != null)
-            {
-                _request.Spatial.BBoxNeCorner =
-                    new SearchRequestPoint(pt.Item1, pt.Item2);
-            }
-
-            _request.Spatial.IsBBoxContainer = PromptBool("BBox is container",
-                _request.Spatial.IsBBoxContainer);
-        }
-
-        private void GetOptions()
-        {
-            ColorConsole.WriteWrappedHeader("Options");
-            ColorConsole.WriteInfo(_request.ToString());
-            Console.WriteLine();
-
-            _request.IsMatchAnyEnabled = PromptBool("Match any",
-                _request.IsMatchAnyEnabled);
-
-            _request.PlaceType = PromptString("Place type (/... or full URI) [{}]: ",
-                null);
-
-            string current = $"{_request.YearMin} - {_request.YearMax}";
-            var t = PromptRange($"Year range [{current}]: ", current);
-            if (t != null)
-            {
-                _request.YearMin = (short)t.Item1;
-                _request.YearMax = (short)t.Item2;
-            }
-
-            current = $"{_request.RankMin} - {_request.RankMax}";
-            t = PromptRange($"Rank range [{current}]", current);
-            if (t != null)
-            {
-                _request.RankMin = (byte)t.Item1;
-                _request.RankMax = (byte)t.Item2;
-            }
-
-            current = _request.Scopes?.Count > 0 ?
-                string.Join(" ", _request.Scopes) : "";
-            string scopes = PromptString("Scopes (* or plttl pldsc pldtl lcttl " +
-                $"nmrmz nmatt nmdsc) [{current}]: ", current);
-            if (!string.IsNullOrEmpty(scopes))
-            {
-                if (scopes == "*")
+                AnsiConsole.MarkupLine(
+                    "[green]Q[/]uery | " +
+                    "[green]C[/]ount | " +
+                    "[green]O[/]ptions | " +
+                    "[yellow]R[/]eset | " +
+                    "e[red]X[/]it");
+                char c = Console.ReadKey().KeyChar;
+                if (c == 'x') break;
+                if (c == 'o')
                 {
-                    _request.Scopes = null;
+                    GetOptions();
+                    continue;
                 }
-                else
+                if (c == 'r')
                 {
-                    _request.Scopes = (from s in scopes.Split(
-                        new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
-                        select s).ToList();
+                    _request = new QuickSearchRequest();
+                    continue;
+                }
+                if (c == 'q' || c == 'c')
+                {
+                    _request.Text = AnsiConsole.Prompt(
+                        new TextPrompt<string?>("Text?")
+                        .DefaultValue(_request.Text));
+
+                    var t = _builder.Build(_request);
+                    SqlResult result = _compiler.Compile(
+                        c == 'c' ? t.Item2 : t.Item1);
+
+                    AnsiConsole.Write(new Panel(result.ToString()));
                 }
             }
-
-            if (PromptBool("Set spatials", false)) GetSpatialOptions();
-
-            ColorConsole.WriteInfo(_request.ToString());
-            Console.WriteLine();
-        }
-
-        public Task Run()
-        {
-            ColorConsole.WriteWrappedHeader("BUILD QUERY",
-                headerColor: ConsoleColor.Green);
-
-            while (true)
+            catch (Exception e)
             {
-                try
-                {
-                    char c = PromptChar(
-                        "[green]Q[/green]uery | " +
-                        "[green]C[/green]ount | " +
-                        "[green]O[/green]ptions | " +
-                        "[yellow]R[/yellow]eset | " +
-                        "e[red]X[/red]it");
-                    if (c == 'x') break;
-                    if (c == 'o')
-                    {
-                        GetOptions();
-                        continue;
-                    }
-                    if (c == 'r')
-                    {
-                        _request = new QuickSearchRequest();
-                        continue;
-                    }
-                    if (c == 'q' || c == 'c')
-                    {
-                        _request.Text = PromptString($"Text [{_request.Text}]: ",
-                            _request.Text);
-
-                        var t = _builder.Build(_request);
-                        SqlResult result = _compiler.Compile(
-                            c == 'c'? t.Item2 : t.Item1);
-                        ColorConsole.WriteWrappedHeader("result");
-                        ColorConsole.WriteInfo(result.ToString());
-                        Console.WriteLine();
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine(e.ToString());
-                    ColorConsole.WriteError(e.Message);
-                }
+                Debug.WriteLine(e.ToString());
+                AnsiConsole.MarkupLine($"[red]{e.Message}[/]");
             }
-
-            return Task.CompletedTask;
         }
+
+        return Task.FromResult(0);
     }
 }

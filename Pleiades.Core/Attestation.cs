@@ -1,29 +1,28 @@
-﻿namespace Pleiades.Core
+﻿namespace Pleiades.Core;
+
+/// <summary>
+/// An attestation.
+/// </summary>
+public class Attestation
 {
     /// <summary>
-    /// An attestation.
+    /// Gets or sets the period identifier.
     /// </summary>
-    public class Attestation
+    public string? PeriodId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the confidence identifier.
+    /// </summary>
+    public string? ConfidenceId { get; set; }
+
+    /// <summary>
+    /// Converts to string.
+    /// </summary>
+    /// <returns>
+    /// A <see cref="string" /> that represents this instance.
+    /// </returns>
+    public override string ToString()
     {
-        /// <summary>
-        /// Gets or sets the period identifier.
-        /// </summary>
-        public string PeriodId { get; set; }
-
-        /// <summary>
-        /// Gets or sets the confidence identifier.
-        /// </summary>
-        public string ConfidenceId { get; set; }
-
-        /// <summary>
-        /// Converts to string.
-        /// </summary>
-        /// <returns>
-        /// A <see cref="string" /> that represents this instance.
-        /// </returns>
-        public override string ToString()
-        {
-            return $"{PeriodId} [{ConfidenceId}]";
-        }
+        return $"{PeriodId} [{ConfidenceId}]";
     }
 }

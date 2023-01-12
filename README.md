@@ -22,39 +22,68 @@ To launch a PostgreSQL service without installing it, I prefer to use a ready-ma
 docker run --volume postgresData://c/data/pgsql -p 5432:5432 --name postgres -e POSTGRES_PASSWORD=postgres -d postgis/postgis
 ```
 
+>If you already have a PostgreSQL service instance and you want to keep it unchanged, you can just change the container's name and use the same port (stopping the other instance) or a different one (in this case, update the connection string in `appsettings.json`), e.g.: `docker run --volume postgresData://c/data/pgissql -p 5432:5432 --name postgis -e POSTGRES_PASSWORD=postgres -d postgis/postgis`.
+
 ### Procedure
 
-1. download the Pleiades JSON dataset from [this page](http://atlantides.org/downloads/pleiades/json/).
+💡 During this procedure you will import and progressively enrich data. If you want to take a snapshot at a specific step, just dump the resulting database like:
 
-2. ensure that your database service is running, and that the connection string in `appsettings.json` is correct.
+```bash
+pg_dump --username=postgres -f c:/users/dfusi/desktop/dump.sql pleiades
+```
 
-3. import the JSON file into a database named `pleiades` (you can pick whatever name you want):
+If you do not have the pgsql client tool, you can install client tools only from the official package [setup](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads), or for Ubuntu use `sudo apt install postgresql-client`.
+
+Should you want to manually create an empty database (e.g. for restoring tables into it):
+
+```sql
+create database pleiades
+with owner "postgres"
+encoding 'UTF8'
+lc_collate='en_US.UTF-8'
+lc_ctype='en_US.UTF-8'
+template template0;
+```
+
+The following procedure will create a database from scratch. You just require:
+
+- the Pleiades JSON [data file](http://atlantides.org/downloads/pleiades/json/).
+- the [indexing profile](./pleitool/Assets/Profile.json).
+- a running PostgreSQL with PostGis service.
+
+(1) **download** the latest Pleiades JSON dataset from [this page](http://atlantides.org/downloads/pleiades/json/).
+
+(2) ensure that your **database** service is running, and that the connection string in `appsettings.json` is correct.
+
+(3) **import** the JSON file into a database named `pleiades` (you can pick whatever name you want; the database name here is not specified as we're going to use the default `pleiades` name -- you can change it with option `-d` for all the commands involving a database name):
 
 ```ps1
 ./pleitool import-graph c:\users\dfusi\desktop\pleiades-places.json
 ```
 
-This process will usually take at least 20 minutes, according to your hardware. This is the longest process, as it reads the huge JSON file sequentially. I've not taken care of too complex optimizations here, as I'm not going to use the full import very often (e.g. once a month). You may want to add an import limit (e.g. `-l 100`) to import only a few places and complete the procedure to check it before launching the importer for the full dataset.
+>This process will usually take some minutes, according to your hardware. This is the longest process, as it reads the huge JSON file sequentially. I've not taken care of too complex optimizations here, as I'm not going to use the full import very often (e.g. once a month). You may want to add an import limit (e.g. `-l 100`) to import only a few places and complete the procedure to check it before launching the importer for the full dataset. You can also try with dry mode first, which does not touch the database, by adding the `-p` option.
 
-4. have the Pleiades [Embix](https://github.com/vedph/embix) profile somewhere ready on your machine. You can find it in this repository under `pleitool/Assets`. In this example, I placed it on my Windows desktop with name `pleiades-profile.json`.
+(4) have the Pleiades [Embix](https://github.com/vedph/embix) **profile** somewhere ready on your machine. You can find it in this repository under `pleitool/Assets`. In this example, I placed it on my Windows desktop with name `pleiades-profile.json`.
 
-5. create the text index inside the database using the Embix profile:
+(5) create the text **index** inside the database using the Embix profile:
 
 ```ps1
-./pleitool build-index c:\users\dfusi\desktop\pleiades-profile.json pleiades -c
+./pleitool index c:\users\dfusi\desktop\pleiades-profile.json -c
 ```
 
-Please refer to the command options below for more. This command provides several options for optimizations and multithreading. Usually, with a couple of running threads I can fully index the dataset in less than 5 minutes.
+This command provides several options for optimizations and multithreading, but usually a couple of parallel running threads (the default) is fine.
 
 You will find that your `pleiades` database now has two more tables: `eix_token` and `eix_occurrence`.
 
-6. populate the spatial columns in the `pleiades` database with this command:
+(6) populate the spatial columns in the `pleiades` database with this command:
 
 ```ps1
-./pleitool pop-spatial pleiades
+./pleitool pop-spatial
 ```
 
-This completes the import procedure. FYI, the last step just executes the following commands to _populate the spatial columns_ with data parsed from GeoJSON fields, as imported from the original dataset. Notice that the bounding box rectangle is built from SW/NE corners (`POLYGON((bbox_sw_lon bbox_sw_lat, bbox_ne_lon bbox_sw_lat, bbox_ne_lon bbox_ne_lat, bbox_sw_lon bbox_ne_lat, bbox_sw_lon bbox_sw_lat))`):
+This completes the import procedure.
+
+FYI, the last step just executes the following commands to _populate the spatial columns_ with data parsed from GeoJSON fields, as imported from the original dataset. Notice that the bounding box rectangle is built from SW/NE corners (`POLYGON((bbox_sw_lon bbox_sw_lat, bbox_ne_lon bbox_sw_lat, bbox_ne_lon bbox_ne_lat, bbox_sw_lon bbox_ne_lat, bbox_sw_lon bbox_sw_lat))`):
 
 ```sql
 -- place
@@ -103,8 +132,7 @@ CREATE EXTENSION address_standardizer_data_us;
 CREATE EXTENSION postgis_tiger_geocoder;
 ```
 
-This sample code comes from the [PostGIS setup page](https://postgis.net/install/), so please refer to it for updates or more.
-Anyway, in this procedure you are not required to do anything, because these extensions have already been setup by the JSON importer.
+This sample code comes from the [PostGIS setup page](https://postgis.net/install/), so please refer to it for updates or more. Anyway, in this procedure you are not required to do anything, because these extensions have already been setup by the JSON importer.
 
 You can now execute typical queries like this:
 
@@ -129,34 +157,7 @@ Among other results, you will find [Epidauros](https://pleiades.stoa.org/places/
 
 Use the `build-query` command of `pleitool` to build SQL queries according to a set of filters.
 
-Your database is now complete. You can backup it via `pgsql` like:
-
-```ps1
-pg_dump -U postgres -Fc pleiades >pleiades.dump
-```
-
-(this assumes that your PostgreSql user is named `postgres`, like in the Docker image. If you run a PostgreSql container as explained above, the password is `postgres`, too, as you can see from the Docker command quoted above).
-
-Sample [restore](https://www.postgresql.org/docs/13/app-pgrestore.html) command:
-
-```ps1
-pg_restore -U postgres -c -C -d pleiades -j 8 pleiades.dump
-```
-
-If you do not have the pgsql client tool, you can install client tools only from the official package [setup](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads).
-
-Should you want to manually create an empty database (e.g. for restoring tables into it):
-
-```sql
-create database pleiades
-with owner "postgres"
-encoding 'UTF8'
-lc_collate='en_US.UTF-8'
-lc_ctype='en_US.UTF-8'
-template template0;
-```
-
-7. if you want to create the binary files to be imported by the API, run the export command like:
+(7) if you want to create the binary files to be imported by the API, run the export command like:
 
 ```ps1
 ./pleitool export pleiades c:\users\dfusi\desktop\pleiades-bin\
@@ -352,7 +353,7 @@ Note: casting to geography type is [required](https://stackoverflow.com/question
 
 You can then add as many of these t-queries as required, connecting them with `intersect` (for AND) or `union` (for OR), and eventually adding an `order by` clause. The t-queries just return place IDs; you can then join these with all the data you want to return as a result.
 
-## CLI Syntax
+## CLI Tool
 
 The import tool is a CLI multi-platform tool, not tied to a specific SQL implementation. Even though both MySql and PostgreSql can be used, for the spatial features I'm using PostgreSql.
 
@@ -410,7 +411,7 @@ Sample (try with 10 places without writing to DB):
 Syntax:
 
 ```ps1
-./pleitool build-index <JsonFilePath> <DatabaseName> [-t <DatabaseType>] [-c] [-p <PartitionCount>] [-s <MinPartitionSize>] [-l <RecordLimit>]
+./pleitool index <JsonFilePath> <DatabaseName> [-t <DatabaseType>] [-c] [-p <PartitionCount>] [-s <MinPartitionSize>] [-l <RecordLimit>]
 ```
 
 - `JsonFilePath` is the path of the JSON profile file for Embix.
@@ -424,7 +425,7 @@ Syntax:
 Sample:
 
 ```ps1
-./pleitool build-index c:\users\dfusi\desktop\pleiades-profile.json pleiades -t pgsql -c
+./pleitool index c:\users\dfusi\desktop\pleiades-profile.json pleiades -t pgsql -c
 ```
 
 ### Validate Geometries Command
