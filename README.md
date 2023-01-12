@@ -1,5 +1,28 @@
 # Pleiades Wrapper API
 
+- [Pleiades Wrapper API](#pleiades-wrapper-api)
+  - [Quick Start](#quick-start)
+    - [Prerequisites](#prerequisites)
+    - [Procedure](#procedure)
+  - [Database Schema](#database-schema)
+  - [Authentication](#authentication)
+  - [Indexing Text for Search](#indexing-text-for-search)
+  - [Searching](#searching)
+  - [CLI Tool](#cli-tool)
+    - [Build Index Command](#build-index-command)
+    - [Build Query Command](#build-query-command)
+    - [Bulk Export Command](#bulk-export-command)
+    - [Create Database Command](#create-database-command)
+    - [Import Graph Command](#import-graph-command)
+    - [Populate Spatial Data Command](#populate-spatial-data-command)
+    - [Scan Graph Command](#scan-graph-command)
+    - [Validate Geometries Command](#validate-geometries-command)
+  - [Pleiades Overview](#pleiades-overview)
+    - [Model](#model)
+    - [Search](#search)
+    - [JSON File](#json-file)
+  - [History](#history)
+
 Thus project includes a CLI tool to import the Pleiades JSON dataset from its full-blown JSON file dump into a specially designed PostgreSQL database; a core search layer; and an API wrapper.
 
 The initial development plan is targeted to a limited set of search functions. A later stage will include more, and eventually extend to other gazetteers where required.
