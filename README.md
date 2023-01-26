@@ -427,7 +427,7 @@ Example:
 ```
 
 - `TARGET_DIR` is the target directory.
-- `DB_NAME` is the target database name. Default=`pleiades`.
+- `DB_NAME` is the source database name. Default=`pleiades`.
 
 Example:
 
