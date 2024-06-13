@@ -9,7 +9,7 @@ public class QuickSearchResult
     /// <summary>
     /// The place ID.
     /// </summary>
-    public string Id { get; set; }
+    public string Id { get; set; } = "";
 
     /// <summary>
     /// The URI prefix prepended to <see cref="Id"/> to get to the original

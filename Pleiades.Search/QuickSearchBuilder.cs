@@ -195,7 +195,7 @@ public class QuickSearchBuilder
     /// <exception cref="ArgumentNullException">request</exception>
     public Tuple<Query,Query> Build(QuickSearchRequest request)
     {
-        if (request == null) throw new ArgumentNullException(nameof(request));
+        ArgumentNullException.ThrowIfNull(request);
 
         // normalize whitespace in text request, as we're going to split it
         // at each whitespace

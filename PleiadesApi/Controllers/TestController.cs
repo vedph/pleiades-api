@@ -12,31 +12,25 @@ namespace PleiadesApi.Controllers;
 /// <summary>
 /// Diagnostic functions.
 /// </summary>
+/// <remarks>
+/// Initializes a new instance of the <see cref="TestController" /> class.
+/// </remarks>
+/// <param name="messageBuilderService">The message builder service.</param>
+/// <param name="mailerService">The mailer service.</param>
+/// <param name="config">The configuration.</param>
+/// <exception cref="ArgumentNullException">logger</exception>
 [ApiController]
-public sealed class TestController : ControllerBase
+public sealed class TestController(
+    IMessageBuilderService messageBuilderService,
+    IMailerService mailerService,
+    IConfiguration config) : ControllerBase
 {
-    private readonly IMessageBuilderService _messageBuilderService;
-    private readonly IMailerService _mailerService;
-    private readonly IConfiguration _config;
-    private readonly bool _enabled;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="TestController" /> class.
-    /// </summary>
-    /// <param name="messageBuilderService">The message builder service.</param>
-    /// <param name="mailerService">The mailer service.</param>
-    /// <param name="config">The configuration.</param>
-    /// <exception cref="ArgumentNullException">logger</exception>
-    public TestController(
-        IMessageBuilderService messageBuilderService,
-        IMailerService mailerService,
-        IConfiguration config)
-    {
-        _messageBuilderService = messageBuilderService;
-        _mailerService = mailerService;
-        _config = config;
-        _enabled = config.GetSection("Diagnostics").GetValue<bool>("IsTestEnabled");
-    }
+    private readonly IMessageBuilderService _messageBuilderService =
+        messageBuilderService;
+    private readonly IMailerService _mailerService = mailerService;
+    private readonly IConfiguration _config = config;
+    private readonly bool _enabled = config.GetSection("Diagnostics")
+        .GetValue<bool>("IsTestEnabled");
 
     /// <summary>
     /// Adds a diagnostic entry to the log.

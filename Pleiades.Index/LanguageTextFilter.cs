@@ -29,8 +29,7 @@ public sealed class LanguageTextFilter : ITextFilter
     /// <exception cref="ArgumentNullException">text</exception>
     public void Apply(StringBuilder text)
     {
-        if (text == null)
-            throw new ArgumentNullException(nameof(text));
+        ArgumentNullException.ThrowIfNull(text);
 
         for (int i = 0; i < Math.Min(text.Length, 4); i++)
         {

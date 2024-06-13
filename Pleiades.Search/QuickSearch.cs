@@ -26,7 +26,8 @@ public abstract class QuickSearch
     /// <summary>
     /// Create a new instance of <see cref="PgSqlQuickSearch"/> class.
     /// </summary>
-    /// <param name="connectionString"></param>
+    /// <param name="connectionString">The connection string.</param>
+    /// <exception cref="ArgumentNullException">connectionString</exception>
     protected QuickSearch(string connectionString)
     {
         ConnectionString = connectionString
@@ -67,8 +68,7 @@ public abstract class QuickSearch
     /// <exception cref="ArgumentNullException">filter</exception>
     public DataPage<LookupEntry> GetLookup(LookupFilter filter)
     {
-        if (filter == null)
-            throw new ArgumentNullException(nameof(filter));
+        ArgumentNullException.ThrowIfNull(filter);
 
         using IDbConnection connection = GetConnection();
         connection.Open();
@@ -95,8 +95,21 @@ public abstract class QuickSearch
             }
 
             // get entries
+            var results = query.Get<dynamic>();
+            List<LookupEntry> paged = [];
+            foreach (dynamic result in results)
+            {
+                paged.Add(new LookupEntry
+                {
+                    Id = result.id,
+                    FullName = result.full_name,
+                    ShortName = result.short_name,
+                    Group = result.group
+                });
+            }
+
             return new DataPage<LookupEntry>(filter.PageNumber, filter.PageSize,
-                total, query.Get<LookupEntry>().ToList());
+                total, paged);
         }
 
         // else we get all the entries at once
@@ -120,8 +133,7 @@ public abstract class QuickSearch
     /// <exception cref="ArgumentNullException">request</exception>
     public DataPage<QuickSearchResult> Execute(QuickSearchRequest request)
     {
-        if (request == null)
-            throw new ArgumentNullException(nameof(request));
+        ArgumentNullException.ThrowIfNull(request);
 
         var t = _builder.Build(request);
         using IDbConnection connection = GetConnection();
@@ -132,7 +144,7 @@ public abstract class QuickSearch
         int total = (int)row.count;
 
         // items
-        List<QuickSearchResult> places = new();
+        List<QuickSearchResult> places = [];
         foreach (dynamic place in qf.FromQuery(t.Item1).Get())
             places.Add(AdaptResult(place));
 

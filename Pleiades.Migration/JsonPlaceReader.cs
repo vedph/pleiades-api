@@ -49,8 +49,7 @@ public sealed class JsonPlaceReader
     /// <exception cref="ArgumentNullException">stream</exception>
     public JsonPlaceReader(Stream stream, LookupEntrySet? lookupSet)
     {
-        if (stream is null)
-            throw new ArgumentNullException(nameof(stream));
+        ArgumentNullException.ThrowIfNull(stream);
 
         LookupSet = lookupSet ?? new LookupEntrySet();
         _jwOptions = new JsonSerializerOptions { WriteIndented = false };

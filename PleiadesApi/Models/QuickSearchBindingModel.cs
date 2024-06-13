@@ -11,7 +11,7 @@ namespace PleiadesApi.Models;
 public sealed class QuickSearchBindingModel : SpatialBindingModel
 {
     /// <summary>
-    /// Gets or sets the text. This can include 1 or more tokens, separated
+    /// The text to search. This can include 1 or more tokens, separated
     /// by spaces. Each token is preceded by an optional operator; when no
     /// operator is specified, <c>*=</c> (contains) is assumed.
     /// </summary>
@@ -25,9 +25,9 @@ public sealed class QuickSearchBindingModel : SpatialBindingModel
     public bool MatchAny { get; set; }
 
     /// <summary>
-    /// Gets or sets the optional type of the place to match.
+    /// The optional type of the place to match.
     /// You can specify the full URI, or just <c>/</c> followed by its last
-    /// segment (e.g. <c>/settlement</c>) when using the pleiades URI.
+    /// segment (e.g. <c>/settlement</c>) when using the Pleiades URI.
     /// </summary>
     public string? PlaceType { get; set; }
 

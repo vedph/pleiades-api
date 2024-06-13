@@ -48,8 +48,7 @@ public sealed class EfPleiadesWriter : IDisposable
     /// <exception cref="ArgumentNullException">place</exception>
     public void WritePlace(EfPlace place)
     {
-        if (place == null)
-            throw new ArgumentNullException(nameof(place));
+        ArgumentNullException.ThrowIfNull(place);
 
         _places.Add(place);
         if (_places.Count >= CacheSize) Flush();
@@ -62,8 +61,7 @@ public sealed class EfPleiadesWriter : IDisposable
     /// <exception cref="ArgumentNullException">lookups</exception>
     public void WriteLookups(IList<EfLookup> lookups)
     {
-        if (lookups == null)
-            throw new ArgumentNullException(nameof(lookups));
+        ArgumentNullException.ThrowIfNull(lookups);
 
         _context.Lookups.AddRange(lookups);
         _context.SaveChanges();
@@ -77,8 +75,7 @@ public sealed class EfPleiadesWriter : IDisposable
     /// <exception cref="ArgumentNullException">links</exception>
     public void ResolvePending(IList<PendingLink> links)
     {
-        if (links == null)
-            throw new ArgumentNullException(nameof(links));
+        ArgumentNullException.ThrowIfNull(links);
 
         List<EfConnection> resConnections = new();
         List<EfPlaceLink> resLinks = new();

@@ -9,20 +9,15 @@ namespace PleiadesApi.Controllers;
 /// <summary>
 /// Quick search controller.
 /// </summary>
+/// <remarks>
+/// Initializes a new instance of the <see cref="QuickSearchController"/>
+/// class.
+/// </remarks>
+/// <param name="search">The quick search service.</param>
 [ApiController]
-public class QuickSearchController : ControllerBase
+public class QuickSearchController(IQuickSearch search) : ControllerBase
 {
-    private readonly IQuickSearch _search;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="QuickSearchController"/>
-    /// class.
-    /// </summary>
-    /// <param name="search">The quick search service.</param>
-    public QuickSearchController(IQuickSearch search)
-    {
-        _search = search;
-    }
+    private readonly IQuickSearch _search = search;
 
     /// <summary>
     /// Gets the requested page of lookup data. You can set the page size
@@ -32,6 +27,7 @@ public class QuickSearchController : ControllerBase
     /// <returns>Page.</returns>
     [HttpGet("api/lookup")]
     [ProducesResponseType(200)]
+    [Produces("application/json")]
     public ActionResult<DataPage<LookupEntry>> GetLookup(
         [FromQuery] LookupBindingModel model)
     {
@@ -47,7 +43,8 @@ public class QuickSearchController : ControllerBase
     /// <returns>The requested page of results.</returns>
     [HttpGet("api/qsearch")]
     [ProducesResponseType(200)]
-    public ActionResult<DataPage<dynamic>> Search(
+    [Produces("application/json")]
+    public ActionResult<DataPage<QuickSearchResult>> Search(
         [FromQuery] QuickSearchBindingModel model)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
