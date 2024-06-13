@@ -52,7 +52,7 @@ docker run --volume postgresData://c/data/pgsql -p 5432:5432 --name postgres -e 
 💡 During this procedure you will import and progressively enrich data. If you want to take a snapshot at a specific step, just dump the resulting database like:
 
 ```bash
-pg_dump --username=postgres -f c:/users/dfusi/desktop/dump.sql pleiades
+pg_dump --username=postgres -f c:/users/dfusi/desktop/pleiades.sql pleiades
 ```
 
 If you do not have the pgsql client tool, you can install client tools only from the official package [setup](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads), or for Ubuntu use `sudo apt install postgresql-client`.
@@ -84,7 +84,7 @@ The following procedure will create a database from scratch. You just require:
 ./pleitool import-graph c:\users\dfusi\desktop\pleiades-places.json
 ```
 
->This process will usually take some minutes, according to your hardware. This is the longest process, as it reads the huge JSON file sequentially. I've not taken care of too complex optimizations here, as I'm not going to use the full import very often (e.g. once a month). You may want to add an import limit (e.g. `-l 100`) to import only a few places and complete the procedure to check it before launching the importer for the full dataset. You can also try with dry mode first, which does not touch the database, by adding the `-p` option.
+>This process will usually take some minutes, according to your hardware. This is the longest process, as it reads the huge JSON file sequentially. I've not taken care of too complex optimizations here, as I'm not going to use the full import very often (e.g. once a month). You may want to add an import limit (e.g. `-l 100`) to import only a few places and complete the procedure to check it before launching the importer for the full dataset. You can also try with dry mode first, which does not touch the database, by adding the `-p` (=preflight) option.
 
 (4) have the Pleiades [Embix](https://github.com/vedph/embix) **profile** somewhere ready on your machine. You can find it in this repository under `pleitool/Assets`. In this example, I placed it on my Windows desktop with name `pleiades-profile.json`.
 
@@ -192,7 +192,7 @@ Among other results, you will find [Epidauros](https://pleiades.stoa.org/places/
 (7) if you want to create the binary files to be imported by the API, run the export command like:
 
 ```bash
-./pleitool export pleiades c:\users\dfusi\desktop\pleiades-bin\
+./pleitool export c:\users\dfusi\desktop\pleiades-bin\
 ```
 
 ## Database Schema
@@ -722,6 +722,7 @@ Here is the tree from the root object:
 
 ## History
 
+- 2024-06-13: upgraded to NET 8.
 - 2023-01-12:
   - upgraded to NET 7.
   - refactored CLI to use [Spectre Console](https://spectreconsole.net)

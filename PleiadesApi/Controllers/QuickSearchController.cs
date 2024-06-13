@@ -10,7 +10,7 @@ namespace PleiadesApi.Controllers;
 /// Quick search controller.
 /// </summary>
 [ApiController]
-public class QuickSearchController : Controller
+public class QuickSearchController : ControllerBase
 {
     private readonly IQuickSearch _search;
 

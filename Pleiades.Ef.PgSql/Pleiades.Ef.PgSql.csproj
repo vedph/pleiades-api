@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
 	<Nullable>enable</Nullable>
   </PropertyGroup>
 
@@ -19,9 +19,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Embix.PgSql" Version="1.2.2" />
-    <PackageReference Include="Embix.Plugin.Greek" Version="1.2.2" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.1" />
+    <PackageReference Include="Embix.PgSql" Version="3.0.0" />
+    <PackageReference Include="Embix.Plugin.Greek" Version="3.0.0" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
   </ItemGroup>
 
 </Project>

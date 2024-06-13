@@ -1,11 +1,11 @@
 # Stage 1: base
-FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
-EXPOSE 80
+EXPOSE 8080
 EXPOSE 443
 
 # Stage 2: build
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY ["PleiadesApi/PleiadesApi.csproj", "PleiadesApi/"]
 RUN dotnet restore "PleiadesApi/PleiadesApi.csproj" -s https://api.nuget.org/v3/index.json --verbosity n

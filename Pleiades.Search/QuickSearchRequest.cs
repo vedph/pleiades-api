@@ -69,7 +69,7 @@ public class QuickSearchRequest : PagingOptions
     /// </summary>
     public QuickSearchRequest()
     {
-        Scopes = new List<string> { "plttl", "lcttl", "nmrmz" };
+        Scopes = ["plttl", "lcttl", "nmrmz"];
     }
 
     /// <summary>

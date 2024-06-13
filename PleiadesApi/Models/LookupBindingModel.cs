@@ -12,17 +12,17 @@ public class LookupBindingModel : PagingBindingModel
     /// The prefix to be matched against the fullname,
     /// e.g. <c>https://pleiades.stoa.org/vocabularies/place-types/</c>.
     /// </summary>
-    public string Prefix { get; set; }
+    public string? Prefix { get; set; }
 
     /// <summary>
     /// A text to be matched against any part of the short name.
     /// </summary>
-    public string ShortName { get; set; }
+    public string? ShortName { get; set; }
 
     /// <summary>
     /// The group to be matched.
     /// </summary>
-    public string Group { get; set; }
+    public string? Group { get; set; }
 
     /// <summary>
     /// Converts this model to a <see cref="LookupFilter"/>.

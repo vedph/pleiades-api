@@ -52,13 +52,13 @@ internal sealed class BuildQueryCommand : AsyncCommand
                     AnsiConsole.MarkupLine("[red]Invalid longitude[/]");
                 else if (lat < -90 || lat > 90)
                     AnsiConsole.MarkupLine("[red]Invalid latitude[/]");
-                else return new[] { lon, lat };
+                else return [lon, lat];
             }
             AnsiConsole.MarkupLine("[red]Invalid point[/]");
         }
     }
 
-    private static IList<int> PromptForIntRange(string message,
+    private static List<int> PromptForIntRange(string message,
         string defaultValue, string resetValue = "/")
     {
         Regex nRegex = new Regex("(-?[0-9]+)", RegexOptions.Compiled);
@@ -68,7 +68,7 @@ internal sealed class BuildQueryCommand : AsyncCommand
         {
             value = AnsiConsole.Prompt(new TextPrompt<string>(message)
                 .DefaultValue(defaultValue));
-            if (value == resetValue) return Array.Empty<int>();
+            if (value == resetValue) return [];
 
             List<Match> matches = nRegex.Matches(value).ToList();
             if (matches.Count == 2)
@@ -80,7 +80,7 @@ internal sealed class BuildQueryCommand : AsyncCommand
                     value.AsSpan(matches[1].Index, matches[1].Length),
                     CultureInfo.InvariantCulture);
 
-                if (min <= max) return new[] { min, max };
+                if (min <= max) return [min, max];
             }
             AnsiConsole.MarkupLine("[red]Invalid range[/]");
         }
@@ -174,8 +174,7 @@ internal sealed class BuildQueryCommand : AsyncCommand
             .PageSize(10)
             .Title("Pick scope(s)")
             .InstructionsText("Use arrows to move and space to toggle")
-            .AddChoices(new[]
-            {
+            .AddChoices(
                 "(all)",
                 "plttl",
                 "pldsc",
@@ -183,7 +182,7 @@ internal sealed class BuildQueryCommand : AsyncCommand
                 "nmrmz",
                 "nmatt",
                 "nmdsc"
-            }));
+            ));
         _request.Scopes = scopes.Any(s => s == "all") ? null : scopes;
 
         if (AnsiConsole.Confirm("Set spatial options?", false))

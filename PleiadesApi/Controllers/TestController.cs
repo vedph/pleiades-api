@@ -13,7 +13,7 @@ namespace PleiadesApi.Controllers;
 /// Diagnostic functions.
 /// </summary>
 [ApiController]
-public sealed class TestController : Controller
+public sealed class TestController : ControllerBase
 {
     private readonly IMessageBuilderService _messageBuilderService;
     private readonly IMailerService _mailerService;

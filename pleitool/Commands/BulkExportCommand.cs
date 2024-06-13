@@ -32,8 +32,8 @@ internal sealed class BulkExportCommand : AsyncCommand<BulkExportCommandSettings
 
         IBulkTableCopier tableCopier = new PgSqlBulkTableCopier(cs);
         BulkTablesCopier copier = new(tableCopier);
-        copier.Write(new[]
-        {
+        copier.Write(
+        [
             "lookup", "eix_token", "eix_occurrence",
             "author", "place", "place_author_link",
             "place_attestation", "place_feature", "place_link", "place_meta",
@@ -42,8 +42,8 @@ internal sealed class BulkExportCommand : AsyncCommand<BulkExportCommandSettings
             "location_author_link", "location_meta", "location_reference",
             "connection", "connection_attestation", "connection_author_link",
             "connection_reference"
-        }, settings.TargetDir, CancellationToken.None,
-        new Progress<string>((s) => Console.WriteLine(s)));
+        ], settings.TargetDir, CancellationToken.None,
+        new Progress<string>(Console.WriteLine));
 
         return Task.FromResult(0);
     }
