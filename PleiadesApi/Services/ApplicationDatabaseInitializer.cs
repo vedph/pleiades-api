@@ -44,34 +44,39 @@ public sealed class ApplicationDatabaseInitializer :
     {
         // check if DB exists
         string name = Configuration.GetValue<string>("DatabaseName")!;
-        Serilog.Log.Information($"Checking for database {name}...");
+        Serilog.Log.Information("Checking for database {Name}...", name);
 
         string csTemplate = Configuration.GetConnectionString("Default")!;
         PgSqlDbManager manager = new(csTemplate);
 
         if (!manager.Exists(name))
         {
-            Serilog.Log.Information($"Creating database {name}...");
+            Serilog.Log.Information("Creating database {Name}...", name);
 
             manager.CreateDatabase(name, PleiadesDbSchema.Get(), null);
             Serilog.Log.Information("Database created.");
 
             // we need to add to the generic Pleiades schema the auth tables,
             // plus the text index (Embix) tables
-            Logger?.LogInformation("Creating pleiades database");
+            Logger?.LogInformation("Creating Pleiades database");
             StringBuilder sb = new();
             sb.AppendLine(LoadResourceText("Index.pgsql"));
             manager.CreateDatabase("pleiades",
                 PleiadesDbSchema.Get(),
                 sb.ToString());
-            Logger?.LogInformation("Created pleiades database");
+            Logger?.LogInformation("Created Pleiades database");
 
             // seed data from binary files if present
             string sourceDir = Configuration.GetValue<string>("Data:SourceDir")!;
             if (string.IsNullOrEmpty(sourceDir) || !Directory.Exists(sourceDir))
+            {
+                Logger?.LogInformation(
+                    "Data source directory {Directory} not found", sourceDir);
                 return;
+            }
 
-            Logger?.LogInformation("Seeding pleiades database from " + sourceDir);
+            Logger?.LogInformation("Seeding Pleiades database from {Directory}",
+                sourceDir);
             string cs = string.Format(csTemplate, name);
             BulkTablesCopier copier = new(
                 new PgSqlBulkTableCopier(cs));
