@@ -44,10 +44,10 @@ internal sealed class BuildIndexCommand : AsyncCommand<BuildIndexCommandSettings
             CliAppContext.Configuration.GetConnectionString("Default")!,
             settings.DbName);
 
-        IIndexBuilderFactory factory = new PgSqlPleiadesIndexBuilderFactory(
+        PgSqlPleiadesIndexBuilderFactory factory = new(
             LoadText(settings.ProfilePath!), cs);
 
-        ITableInitializer initializer = new PgSqlPleiadesTableInitializer(
+        PgSqlPleiadesTableInitializer initializer = new(
             new PgSqlDbConnectionFactory(cs));
 
         PleiadesMetadataSupplier supplier = new(

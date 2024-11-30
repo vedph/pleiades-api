@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <Product>Pleiades wrapper API</Product>
     <Authors>Daniele Fusi</Authors>
     <Company>Fusi</Company>
@@ -9,10 +9,13 @@
     <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
     <NeutralLanguage>en-US</NeutralLanguage>
 	<Nullable>enable</Nullable>
+	<Version>2.0.0</Version>
+	<FileVersion>2.0.0</FileVersion>
+	<AssemblyVersion>2.0.0</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Fusi.Tools" Version="5.0.0" />
+    <PackageReference Include="Fusi.Tools" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>

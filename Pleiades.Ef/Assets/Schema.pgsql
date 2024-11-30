@@ -35,8 +35,8 @@ CREATE TABLE public.place (
 	title varchar(200) NOT NULL,
 	description varchar(5000) NULL,
 	details text NULL,
-	provenance varchar(500) NULL,
-	rights varchar(500) NULL,
+	provenance varchar(1000) NULL,
+	rights varchar(1000) NULL,
 	review_state_id integer NOT NULL,
 	created date NOT NULL,
 	modified date NOT NULL,
@@ -81,7 +81,7 @@ CREATE TABLE public.place_feature (
 	geometry varchar NULL,
 	snippet varchar(100) NULL,
 	link varchar(200) NULL,
-	description varchar(500) NULL,
+	description varchar(1000) NULL,
 	"precision" varchar(50) NULL,
 	geo geography NULL,
 	CONSTRAINT place_feature_pk PRIMARY KEY (id),
@@ -102,7 +102,7 @@ CREATE TABLE public.place_meta (
 	id serial NOT NULL,
 	place_id varchar(20) NOT NULL,
 	"name" varchar(100) NOT NULL,
-	value varchar(500) NOT NULL,
+	value varchar(1000) NOT NULL,
 	CONSTRAINT place_meta_pk PRIMARY KEY (id),
 	CONSTRAINT place_meta_fk FOREIGN KEY (place_id) REFERENCES public.place(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -118,8 +118,8 @@ CREATE TABLE public.place_reference (
 	alternate_uri varchar(1000) NULL,
 	bib_uri varchar(1000) NULL,
 	citation varchar(2000) NULL,
-	citation_detail varchar(500) NULL,
-	other_id varchar(500) NULL,
+	citation_detail varchar(1000) NULL,
+	other_id varchar(1000) NULL,
 	CONSTRAINT place_reference_pk PRIMARY KEY (id),
 	CONSTRAINT place_reference_fk FOREIGN KEY (place_id) REFERENCES public.place(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -134,9 +134,9 @@ CREATE TABLE public."name" (
 	start_year smallint NOT NULL,
 	end_year smallint NOT NULL,
 	attested varchar(100) NULL,
-	romanized varchar(500) NOT NULL,
-	provenance varchar(500) NULL,
-	description varchar(500) NULL,
+	romanized varchar(1000) NOT NULL,
+	provenance varchar(1000) NULL,
+	description varchar(1000) NULL,
 	details text NULL,
 	tr_accuracy_id integer NOT NULL,
 	tr_completeness_id integer NOT NULL,
@@ -180,8 +180,8 @@ CREATE TABLE public.name_reference (
 	alternate_uri varchar(1000) NULL,
 	bib_uri varchar(1000) NULL,
 	citation varchar(2000) NULL,
-	citation_detail varchar(500) NULL,
-	other_id varchar(500) NULL,
+	citation_detail varchar(1000) NULL,
+	other_id varchar(1000) NULL,
 	CONSTRAINT name_reference_pk PRIMARY KEY (id)
 );
 ALTER TABLE public.name_reference ADD CONSTRAINT name_reference_fk FOREIGN KEY (name_id) REFERENCES "name"(id) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -197,11 +197,11 @@ CREATE TABLE public."location" (
 	start_year smallint NOT NULL,
 	end_year smallint NOT NULL,
 	title varchar(200) NOT NULL,
-	provenance varchar(500) NULL,
-	remains varchar(500) NULL,
+	provenance varchar(1000) NULL,
+	remains varchar(1000) NULL,
 	details text NULL,
 	accuracy_value double precision NOT NULL,
-	description varchar(500) NULL,
+	description varchar(1000) NULL,
 	created date NOT NULL,
 	modified date NOT NULL,
 	geometry varchar NULL,
@@ -236,7 +236,7 @@ CREATE TABLE public.location_meta (
 	id serial NOT NULL,
 	location_id integer NOT NULL,
 	"name" varchar(100) NOT NULL,
-	value varchar(500) NOT NULL,
+	value varchar(1000) NOT NULL,
 	CONSTRAINT location_meta_pk PRIMARY KEY (id),
 	CONSTRAINT location_meta_fk FOREIGN KEY (location_id) REFERENCES public."location"(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -252,8 +252,8 @@ CREATE TABLE public.location_reference (
 	alternate_uri varchar(1000) NULL,
 	bib_uri varchar(1000) NULL,
 	citation varchar(2000) NULL,
-	citation_detail varchar(500) NULL,
-	other_id varchar(500) NULL,
+	citation_detail varchar(1000) NULL,
+	other_id varchar(1000) NULL,
 	CONSTRAINT location_reference_pk PRIMARY KEY (id),
 	CONSTRAINT location_reference_fk FOREIGN KEY (location_id) REFERENCES public."location"(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -266,11 +266,11 @@ CREATE TABLE public."connection" (
 	uri varchar(200) NOT NULL,
 	type_id integer NOT NULL,
 	title varchar(100) NOT NULL,
-	description varchar(500) NULL,
+	description varchar(1000) NULL,
 	start_year smallint NOT NULL,
 	end_year smallint NOT NULL,
 	details varchar(5000) NULL,
-	provenance varchar(500) NULL,
+	provenance varchar(1000) NULL,
 	certainty_id integer NOT NULL,
 	target_uri varchar(200) NOT NULL,
 	created date NOT NULL,
@@ -313,8 +313,8 @@ CREATE TABLE public.connection_reference (
 	alternate_uri varchar(1000) NULL,
 	bib_uri varchar(1000) NULL,
 	citation varchar(2000) NULL,
-	citation_detail varchar(500) NULL,
-	other_id varchar(500) NULL,
+	citation_detail varchar(1000) NULL,
+	other_id varchar(1000) NULL,
 	CONSTRAINT connection_reference_pk PRIMARY KEY (id),
 	CONSTRAINT connection_reference_fk FOREIGN KEY (connection_id) REFERENCES public."connection"(id) ON DELETE CASCADE ON UPDATE CASCADE
 );

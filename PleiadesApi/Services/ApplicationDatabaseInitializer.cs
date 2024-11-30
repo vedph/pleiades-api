@@ -16,19 +16,15 @@ namespace PleiadesApi.Services;
 /// <summary>
 /// Application database initializer.
 /// </summary>
-public sealed class ApplicationDatabaseInitializer :
-    AuthDatabaseInitializer<ApplicationUser, ApplicationRole, NamedSeededUserOptions>
+/// <remarks>
+/// Initializes a new instance of the <see cref="ApplicationDatabaseInitializer"/>
+/// class.
+/// </remarks>
+/// <param name="serviceProvider">The service provider.</param>
+public sealed class ApplicationDatabaseInitializer(IServiceProvider serviceProvider) :
+    AuthDatabaseInitializer<ApplicationUser, ApplicationRole, NamedSeededUserOptions>(
+        serviceProvider)
 {
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ApplicationDatabaseInitializer"/>
-    /// class.
-    /// </summary>
-    /// <param name="serviceProvider">The service provider.</param>
-    public ApplicationDatabaseInitializer(IServiceProvider serviceProvider)
-        : base(serviceProvider)
-    {
-    }
-
     private static string LoadResourceText(string name)
     {
         using StreamReader reader = new(
@@ -43,7 +39,7 @@ public sealed class ApplicationDatabaseInitializer :
     protected override void InitDatabase()
     {
         // check if DB exists
-        string name = Configuration.GetValue<string>("DatabaseName")!;
+        string name = Configuration.GetValue<string>("DatabaseNames:Data")!;
         Serilog.Log.Information("Checking for database {Name}...", name);
 
         string csTemplate = Configuration.GetConnectionString("Default")!;

@@ -26,7 +26,7 @@ internal sealed class BuildQueryCommand : AsyncCommand
         _request = new QuickSearchRequest();
     }
 
-    private static IList<double> PromptForLonLat(string message,
+    private static double[] PromptForLonLat(string message,
         string defaultValue, string resetValue = "/")
     {
         Regex nRegex = new Regex(@"(-?[0-9]+(?:\.[0-9]+)?)", RegexOptions.Compiled);
@@ -36,7 +36,7 @@ internal sealed class BuildQueryCommand : AsyncCommand
         {
             value = AnsiConsole.Prompt(new TextPrompt<string>(message)
                 .DefaultValue(defaultValue));
-            if (value == resetValue) return Array.Empty<double>();
+            if (value == resetValue) return [];
 
             List<Match> matches = nRegex.Matches(value).ToList();
             if (matches.Count == 2)
@@ -147,7 +147,7 @@ internal sealed class BuildQueryCommand : AsyncCommand
             $"Place type (/... or full URI: {_request.PlaceType}): ");
 
         string current = $"{_request.YearMin} {_request.YearMax}";
-        IList<int> minMax = PromptForIntRange("Year range", current);
+        List<int> minMax = PromptForIntRange("Year range", current);
         if (minMax.Count == 0)
         {
             _request.YearMin = _request.YearMax = 0;

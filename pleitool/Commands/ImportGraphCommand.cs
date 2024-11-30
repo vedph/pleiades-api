@@ -65,7 +65,7 @@ internal sealed class ImportGraphCommand : AsyncCommand<ImportGraphCommandSettin
         return flags;
     }
 
-    public override Task<int> ExecuteAsync(CommandContext context,
+    public override async Task<int> ExecuteAsync(CommandContext context,
         ImportGraphCommandSettings settings)
     {
         AnsiConsole.MarkupLine("[red]IMPORT JSON DATASET[/]");
@@ -86,7 +86,7 @@ internal sealed class ImportGraphCommand : AsyncCommand<ImportGraphCommandSettin
         {
             AnsiConsole.Status().Start("Setup database...", ctx =>
             {
-                IDbManager manager = new PgSqlDbManager(csTemplate);
+                PgSqlDbManager manager = new(csTemplate);
 
                 if (manager.Exists(settings.DbName))
                 {
@@ -104,50 +104,71 @@ internal sealed class ImportGraphCommand : AsyncCommand<ImportGraphCommandSettin
             });
         }
 
-        using (Stream stream = new FileStream(settings.InputPath!, FileMode.Open,
-            FileAccess.Read, FileShare.Read))
+        int result = 0;
+        await using (Stream stream = new FileStream(settings.InputPath!,
+            FileMode.Open, FileAccess.Read, FileShare.Read))
         {
-            JsonPlaceReader reader = new(stream, null)
+            try
             {
-                Logger = CliAppContext.Logger
-            };
-            EfPlaceAdapter adapter = new(reader.LookupSet);
+                JsonPlaceReader reader = new(stream, null)
+                {
+                    Logger = CliAppContext.Logger
+                };
+                EfPlaceAdapter adapter = new(reader.LookupSet);
 
-            string cs = string.Format(csTemplate, settings.DbName);
-            IPleiadesContextFactory contextFactory =
-                new PgSqlPleiadesContextFactory(cs);
+                string cs = string.Format(csTemplate, settings.DbName);
+                IPleiadesContextFactory contextFactory =
+                    new PgSqlPleiadesContextFactory(cs);
 
-            using EfPleiadesWriter writer = new(contextFactory)
+                using EfPleiadesWriter writer = new(contextFactory)
+                {
+                    Logger = CliAppContext.Logger
+                };
+
+                PlaceImporter importer = new(
+                    reader,
+                    writer,
+                    adapter)
+                {
+                    Logger = CliAppContext.Logger,
+                    IsDry = settings.IsDry,
+                    Skip = settings.SkipCount,
+                    Limit = settings.Limit,
+                    ImportFlags = ParseFlags(settings.Flags)
+                };
+
+                int count = 0;
+                AnsiConsole.Progress().Start(ctx =>
+                {
+                    var task = ctx.AddTask("Importing");
+                    count = importer.Import(CancellationToken.None,
+                        new Progress<ProgressReport>(
+                            report => task.Value = report.Percent));
+                });
+
+                AnsiConsole.MarkupLine($"Places imported: [cyan]{count}[/]");
+                AnsiConsole.MarkupLine($"Places read    : [cyan]{reader.Position}[/]");
+            }
+            catch (Exception ex)
             {
-                Logger = CliAppContext.Logger
-            };
-
-            PlaceImporter importer = new(
-                reader,
-                writer,
-                adapter)
-            {
-                Logger = CliAppContext.Logger,
-                IsDry = settings.IsDry,
-                Skip = settings.SkipCount,
-                Limit = settings.Limit,
-                ImportFlags = ParseFlags(settings.Flags)
-            };
-
-            int count = 0;
-            AnsiConsole.Progress().Start(ctx =>
-            {
-                var task = ctx.AddTask("Importing");
-                count = importer.Import(CancellationToken.None,
-                    new Progress<ProgressReport>(
-                        report => task.Value = report.Percent));
-            });
-
-            AnsiConsole.MarkupLine($"Places imported: [cyan]{count}[/]");
-            AnsiConsole.MarkupLine($"Places read    : [cyan]{reader.Position}[/]");
+                result = 1;
+                if (ex.InnerException != null)
+                {
+                    Exception? inner = ex.InnerException;
+                    while (inner != null)
+                    {
+                        AnsiConsole.WriteException(inner);
+                        inner = inner.InnerException;
+                    }
+                }
+                else
+                {
+                    AnsiConsole.WriteException(ex);
+                }
+            }
         }
 
-        return Task.FromResult(0);
+        return await Task.FromResult(result);
     }
 }
 

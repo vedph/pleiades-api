@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <Authors>Daniele Fusi</Authors>
     <Company>Fusi</Company>
     <Product>Pleiades wrapper API</Product>
@@ -9,13 +9,16 @@
     <NeutralLanguage>en-US</NeutralLanguage>
     <Copyright>by Daniele Fusi</Copyright>
 	<Nullable>enable</Nullable>
+	<Version>2.0.0</Version>
+	<FileVersion>2.0.0</FileVersion>
+	<AssemblyVersion>2.0.0</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Fusi.Tools" Version="5.0.0" />
+    <PackageReference Include="Fusi.Tools" Version="6.0.0" />
     <PackageReference Include="GeoJSON" Version="2.3.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
-    <PackageReference Include="Npgsql" Version="8.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
+    <PackageReference Include="Npgsql" Version="9.0.1" />
   </ItemGroup>
 
 </Project>

@@ -18,16 +18,15 @@ public static class HostSeedExtensions
 {
     private static Task SeedAsync(IServiceProvider serviceProvider)
     {
-        ApplicationDatabaseInitializer initializer =
-            new(serviceProvider);
+        ApplicationDatabaseInitializer initializer = new(serviceProvider);
 
         return Policy.Handle<DbException>()
-            .WaitAndRetry(new[]
-            {
+            .WaitAndRetry(
+            [
                 TimeSpan.FromSeconds(10),
                 TimeSpan.FromSeconds(30),
                 TimeSpan.FromSeconds(60)
-            }, (exception, timeSpan, _) =>
+            ], (exception, timeSpan, _) =>
             {
                 ILogger logger = serviceProvider
                     .GetService<ILoggerFactory>()!
@@ -36,11 +35,9 @@ public static class HostSeedExtensions
                 string message = "Unable to connect to DB" +
                     $" (sleep {timeSpan}): {exception.Message}";
                 Console.WriteLine(message);
-                logger.LogError(exception, message);
-            }).Execute(async () =>
-            {
-                await initializer.SeedAsync();
-            });
+                logger.LogError("Unable to connect to DB: {Error}",
+                    message);
+            }).Execute(async () => await initializer.SeedAsync());
     }
 
     /// <summary>
@@ -65,12 +62,9 @@ public static class HostSeedExtensions
             int delay = config.GetValue<int>("SeedDelay");
             if (delay > 0)
             {
-                logger.LogInformation($"Waiting {delay} seconds...");
+                logger.LogInformation("Waiting {Delay} seconds...", delay);
                 Thread.Sleep(delay * 1000);
             }
-
-            //IHostEnvironment environment =
-            //    serviceProvider.GetService<IHostEnvironment>();
 
             await SeedAsync(serviceProvider);
             return host;

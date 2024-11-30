@@ -39,7 +39,8 @@ internal sealed class ScanGraphCommand : AsyncCommand<ScanGraphCommandSettings>
         }
     }
 
-    public override Task<int> ExecuteAsync(CommandContext context, ScanGraphCommandSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context,
+        ScanGraphCommandSettings settings)
     {
         AnsiConsole.Markup("[underline green]SCAN GRAPH FROM JSON FILE[/]");
         AnsiConsole.Markup($"Input JSON file: [cyan]{settings.InputPath}[/]");
@@ -50,8 +51,8 @@ internal sealed class ScanGraphCommand : AsyncCommand<ScanGraphCommandSettings>
 
         PlaceMetrics metrics = new();
 
-        using (Stream stream = new FileStream(settings.InputPath!, FileMode.Open,
-            FileAccess.Read, FileShare.Read))
+        await using (Stream stream = new FileStream(settings.InputPath!,
+            FileMode.Open, FileAccess.Read, FileShare.Read))
         {
             JsonPlaceReader reader = new(stream, null)
             {
@@ -65,14 +66,14 @@ internal sealed class ScanGraphCommand : AsyncCommand<ScanGraphCommandSettings>
             }
             Console.WriteLine("Places read: " + reader.Position);
 
-            using StreamWriter writer = new(
+            await using StreamWriter writer = new(
                 Path.Combine(settings.OutputDir ?? "", "pl-report.tsv"), false,
                 Encoding.UTF8);
             WriteReport(reader, metrics, writer);
-            writer.Flush();
+            await writer.FlushAsync();
         }
 
-        return Task.FromResult(0);
+        return await Task.FromResult(0);
     }
 }
 

@@ -30,16 +30,15 @@ internal sealed class ValidateGeoCommand : AsyncCommand<ValidateGeoCommandSettin
             errors = validator.Validate(CancellationToken.None,
                 new Progress<ProgressReport>(
                     report => task.Value(report.Percent)));
+            if (errors > 0)
+            {
+                AnsiConsole.Markup($"[red]Errors: {errors}[/]");
+            }
+            else
+            {
+                AnsiConsole.Write("[green]No errors.[/]");
+            }
         });
-
-        if (errors > 0)
-        {
-            AnsiConsole.Markup($"[red]Errors: {errors}[/]");
-        }
-        else
-        {
-            AnsiConsole.Write("[green]No errors.[/]");
-        }
 
         return Task.FromResult(0);
     }

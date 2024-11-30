@@ -31,15 +31,15 @@ Useful links:
 
 - <www.pleiades.stoa.org>: ancient geography, especially Greek and Roman world. Graph database, no RDBMS. No real API except for getting details from a PID.
 - <www.mapbox.com>: the Pleiades site uses MapBox. [Angular MapBox](https://medium.com/@timo.baehr/using-mapbox-in-angular-application-bc3b2b38592).
-- [Huge JSON Viewer](https://github.com/WelliSolutions/HugeJsonViewer), [Dadroit JSON Viewer](https://dadroit.com/)
+- [Huge JSON Viewer](https://github.com/WelliSolutions/HugeJsonViewer), [Dadroit JSON Viewer](https://dadroit.com/).
 
 ## Quick Start
 
 ### Prerequisites
 
-The only prerequisite is having a PostgreSQL service including PostGIS.
+The only prerequisite is having a PostgreSQL service including **PostGIS**.
 
-To launch a PostgreSQL service without installing it, I prefer to use a ready-made Docker also including [PostGIS](https://postgis.net/install/). You can easily run a container like this (in this sample, I created a folder in my drive at `c:\data\pgsql` to host data outside the container):
+💡 To launch a PostgreSQL service without installing it, I prefer to use a ready-made Docker also including [PostGIS](https://postgis.net/install/). You can easily run a container like this (in this sample, I created a folder in my drive at `c:\data\pgsql` to host data outside the container):
 
 ```bash
 docker run --volume postgresData://c/data/pgsql -p 5432:5432 --name postgres -e POSTGRES_PASSWORD=postgres -d postgis/postgis
@@ -74,31 +74,31 @@ The following procedure will create a database from scratch. You just require:
 - the [indexing profile](./pleitool/Assets/Profile.json).
 - a running PostgreSQL with PostGis service.
 
-(1) **download** the latest Pleiades JSON dataset from [this page](http://atlantides.org/downloads/pleiades/json/), and unzip it in some folder. This is a single huge JSON file.
+▶️ (1) **download** the latest Pleiades JSON dataset from [this page](http://atlantides.org/downloads/pleiades/json/), and unzip it in some folder. This is a single huge JSON file.
 
-(2) ensure that your **database** service is running, and that the connection string in `appsettings.json` is correct.
+▶️ (2) ensure that your **database** service is running, and that the connection string in `appsettings.json` is correct.
 
-(3) **import** the JSON file into a database named `pleiades` (you can pick whatever name you want; the database name here is not specified as we're going to use the default `pleiades` name -- you can change it with option `-d` for all the commands involving a database name):
+▶️ (3) **import** the JSON file into a database named `pleiades` (you can pick whatever name you want; the database name here is not specified as we're going to use the default `pleiades` name -- you can change it with option `-d` for all the commands involving a database name):
 
 ```bash
-./pleitool import-graph c:\users\dfusi\desktop\pleiades-places.json
+./pleitool import-graph c:/users/dfusi/desktop/pleiades-places.json
 ```
 
 >This process will usually take some minutes, according to your hardware. This is the longest process, as it reads the huge JSON file sequentially. I've not taken care of too complex optimizations here, as I'm not going to use the full import very often (e.g. once a month). You may want to add an import limit (e.g. `-l 100`) to import only a few places and complete the procedure to check it before launching the importer for the full dataset. You can also try with dry mode first, which does not touch the database, by adding the `-p` (=preflight) option.
 
-(4) have the Pleiades [Embix](https://github.com/vedph/embix) **profile** somewhere ready on your machine. You can find it in this repository under `pleitool/Assets`. In this example, I placed it on my Windows desktop with name `pleiades-profile.json`.
+▶️ (4) have the Pleiades [Embix](https://github.com/vedph/embix) **profile** somewhere ready on your machine. You can find it in this repository under `pleitool/Assets`. In this example, I placed it on my Windows desktop with name `pleiades-profile.json`.
 
-(5) create the text **index** inside the database using the Embix profile:
+▶️ (5) create the text **index** inside the database using the Embix profile:
 
 ```bash
-./pleitool index c:\users\dfusi\desktop\pleiades-profile.json -c
+./pleitool index c:/users/dfusi/desktop/pleiades-profile.json -c
 ```
 
 This command provides several options for optimizations and multithreading, but usually a couple of parallel running threads (the default) is fine.
 
 You will find that your `pleiades` database now has two more tables: `eix_token` and `eix_occurrence`.
 
-(6) populate the spatial columns in the `pleiades` database with this command:
+▶️ (6) populate the spatial columns in the `pleiades` database with this command:
 
 ```bash
 ./pleitool pop-spatial
@@ -127,7 +127,7 @@ UPDATE location SET geometry=NULL WHERE geometry='null';
 UPDATE location SET geo=(SELECT st_force2d(ST_GeomFromGeoJSON(geometry))) WHERE geometry IS NOT NULL;
 ```
 
-Note: these queries assume that we're handling the Postgres version of the Pleiades database, where the desired PostGIS extensions have already been introduced with commands like these:
+>Note: these queries assume that we're handling the Postgres version of the Pleiades database, where the desired PostGIS extensions have already been introduced with commands like these:
 
 ```sql
 -- Enable PostGIS (as of 3.0 contains just geometry/geography)
@@ -189,10 +189,10 @@ Among other results, you will find [Epidauros](https://pleiades.stoa.org/places/
 
 💡 You can use the build-query command of `pleitool` to build SQL queries according to a set of filters.
 
-(7) if you want to create the binary files to be imported by the API, run the export command like:
+▶️ (7) if you want to create the binary files to be imported by the API, run the export command like:
 
 ```bash
-./pleitool export c:\users\dfusi\desktop\pleiades-bin\
+./pleitool export c:/users/dfusi/desktop/pleiades-bin/
 ```
 
 ## Database Schema
@@ -721,6 +721,12 @@ Here is the tree from the root object:
     - history[] (`EditAction[]`)
 
 ## History
+
+### 2.0.0
+
+- 2024-11-30: ⚠️ upgraded to NET 9.
+
+### 1.0.0
 
 - 2024-06-13: upgraded to NET 8.
 - 2023-01-12:
