@@ -22,6 +22,8 @@
     - [Search](#search)
     - [JSON File](#json-file)
   - [History](#history)
+    - [2.0.0](#200)
+    - [1.0.0](#100)
 
 Thus project includes a CLI tool to import the Pleiades JSON dataset from its full-blown JSON file dump into a specially designed PostgreSQL database; a core search layer; and an API wrapper.
 
@@ -193,6 +195,20 @@ Among other results, you will find [Epidauros](https://pleiades.stoa.org/places/
 
 ```bash
 ./pleitool export c:/users/dfusi/desktop/pleiades-bin/
+```
+
+Quick reference for backup/restore:
+
+👉 Backup:
+
+```bash
+pg_dump --username=postgres -f c:/users/dfusi/desktop/pleiades.sql pleiades
+```
+
+👉 Restore (first create an empty `pleaides` database):
+
+```bash
+psql -U postgres -d pleiades -f c:/users/dfusi/desktop/pleiades.sql
 ```
 
 ## Database Schema
