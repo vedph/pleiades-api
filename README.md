@@ -22,10 +22,12 @@
     - [Search](#search)
     - [JSON File](#json-file)
   - [History](#history)
+    - [2.0.0](#200)
+    - [1.0.0](#100)
 
 Thus project includes a CLI tool to import the Pleiades JSON dataset from its full-blown JSON file dump into a specially designed PostgreSQL database; a core search layer; and an API wrapper.
 
-The initial development plan is targeted to a limited set of search functions. A later stage will include more, and eventually extend to other gazetteers where required.
+The initial development plan is targeted to a limited set of search functions. A later stage will include more, and possibly extend to other gazetteers where required.
 
 Useful links:
 
@@ -233,7 +235,7 @@ Having no clues about the details of this encoding, the import tool is designed 
 - a place _adapter_, which remodels the places read into a form more suitable to the target database.
 - a place _writer_, which writes the remodeled places into the target database.
 
-Thus, the same component can be used in different contexts, or eventually be replaced with others, without disrupting the import flow. For instance, the reader is not only used to import data, but also to scan them and get some details about their shape. For instance, this is used to determine the lengths of the various text fields, and their nullability.
+Thus, the same component can be used in different contexts, or possibly be replaced with others, without disrupting the import flow. For instance, the reader is not only used to import data, but also to scan them and get some details about their shape. For instance, this is used to determine the lengths of the various text fields, and their nullability.
 
 Also, in most cases the graph redundancy is systematically reduced also with relation to entity details. For instance, not only in many cases entities have string fields repeating the same value thousands of times (e.g. `published` vs. `pending` for their review state); but often they come in pair, with a full URI value (like `https://pleiades.stoa.org/vocabularies/place-types/settlement`) side by side with its human-friendly, non-unique short form (`settlement`).
 
@@ -397,7 +399,7 @@ select * from t1;
 
 Note: casting to geography type is [required](https://stackoverflow.com/questions/8464666/distance-between-2-points-in-postgis-in-srid-4326-in-metres) for distance in meters.
 
-You can then add as many of these t-queries as required, connecting them with `intersect` (for AND) or `union` (for OR), and eventually adding an `order by` clause. The t-queries just return place IDs; you can then join these with all the data you want to return as a result.
+You can then add as many of these t-queries as required, connecting them with `intersect` (for AND) or `union` (for OR), and optionally adding an `order by` clause. The t-queries just return place IDs; you can then join these with all the data you want to return as a result.
 
 ## CLI Tool
 
@@ -581,7 +583,7 @@ The Pleiades site provides a text search for places, names, and locations. It dr
   - item type: 1 or more from connection, page, event, location, name, news item, place.
   - review status: 1 or more from drafting, pending, pending review, private, published.
 
-For our primary purpose, the most important search targets geocoding a place name; so it is based on several text fields, eventually combined with tags and spatial data. This project is designed so that we can start with a minimal search, whose first purpose is providing a geocoding service from inside another application, and later expand it at will.
+For our primary purpose, the most important search targets geocoding a place name; so it is based on several text fields, optionally combined with tags and spatial data. This project is designed so that we can start with a minimal search, whose first purpose is providing a geocoding service from inside another application, and later expand it at will.
 
 To this end, the first indexing process is very simple: it draws from a set of fields scattered across various tables, all targeting the place entity, like places, features, and locations. Each field is internally identified by a short code like e.g. `plttl`, where `pl` is an abbreviation representing a table name (`place`) and `ttl` an abbreviation representing a field name (`title`) in that table. This allows filtering the search by including or excluding different fields at will.
 
