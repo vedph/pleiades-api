@@ -1,4 +1,5 @@
-﻿using Fusi.Api.Auth.Services;
+﻿using Fusi.Api.Auth.Models;
+using Fusi.Api.Auth.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -11,13 +12,13 @@ namespace PleiadesApi.Services;
 /// </summary>
 /// <seealso cref="IdentityDbContext" />
 /// <remarks>
-/// Initializes a new instance of the <see cref="ApplicationDbContext"/>
+/// Initializes a new instance of the <see cref="AppDbContext"/>
 /// class.
 /// </remarks>
 /// <param name="options">The options.</param>
-public sealed class ApplicationDbContext(
-    DbContextOptions<ApplicationDbContext> options) :
-    IdentityDbContext<ApplicationUser, ApplicationRole, string>(options)
+public sealed class AppDbContext(
+    DbContextOptions<AppDbContext> options) :
+    IdentityDbContext<NamedUser, IdentityRole, string>(options)
 {
     /// <summary>
     /// Override this method to set defaults and configure conventions before
@@ -66,27 +67,23 @@ public sealed class ApplicationDbContext(
         base.OnModelCreating(builder);
 
         // rename identity tables
-        builder.Entity<ApplicationUser>(b => b.ToTable("app_user"));
+        builder.Entity<NamedUser>(b => b.ToTable("app_user"));
 
-        builder.Entity<IdentityUserClaim<string>>(b => b.ToTable("app_user_claim"));
+        builder.Entity<IdentityUserClaim<string>>(
+            b => b.ToTable("app_user_claim"));
 
-        builder.Entity<IdentityUserLogin<string>>(b => b.ToTable("app_user_login"));
+        builder.Entity<IdentityUserLogin<string>>(
+            b => b.ToTable("app_user_login"));
 
-        builder.Entity<IdentityUserToken<string>>(b => b.ToTable("app_user_token"));
+        builder.Entity<IdentityUserToken<string>>(
+            b => b.ToTable("app_user_token"));
 
-        builder.Entity<ApplicationRole>(b => b.ToTable("app_role"));
+        builder.Entity<IdentityRole>(b => b.ToTable("app_role"));
 
-        builder.Entity<IdentityRoleClaim<string>>(b => b.ToTable("app_role_claim"));
+        builder.Entity<IdentityRoleClaim<string>>(
+            b => b.ToTable("app_role_claim"));
 
-        builder.Entity<IdentityUserRole<string>>(b => b.ToTable("app_user_role"));
-
-        // rename Identity tables to lowercase
-        //foreach (var entity in modelBuilder.Model.GetEntityTypes())
-        //{
-        //    var currentTableName = modelBuilder.Entity(entity.Name)
-        //        .Metadata.GetDefaultTableName();
-        //    modelBuilder.Entity(entity.Name).ToTable(
-        //        currentTableName.ToLowerInvariant());
-        //}
+        builder.Entity<IdentityUserRole<string>>(
+            b => b.ToTable("app_user_role"));
     }
 }

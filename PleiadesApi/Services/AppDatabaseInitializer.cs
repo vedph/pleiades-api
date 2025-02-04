@@ -1,6 +1,8 @@
-﻿using Fusi.Api.Auth.Services;
+﻿using Fusi.Api.Auth.Models;
+using Fusi.Api.Auth.Services;
 using Fusi.DbManager;
 using Fusi.DbManager.PgSql;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Pleiades.Ef;
@@ -17,14 +19,37 @@ namespace PleiadesApi.Services;
 /// Application database initializer.
 /// </summary>
 /// <remarks>
-/// Initializes a new instance of the <see cref="ApplicationDatabaseInitializer"/>
+/// Initializes a new instance of the <see cref="AppDatabaseInitializer"/>
 /// class.
 /// </remarks>
 /// <param name="serviceProvider">The service provider.</param>
-public sealed class ApplicationDatabaseInitializer(IServiceProvider serviceProvider) :
-    AuthDatabaseInitializer<ApplicationUser, ApplicationRole, NamedSeededUserOptions>(
-        serviceProvider)
+public sealed class AppDatabaseInitializer :
+    AuthDatabaseInitializer<NamedUser, IdentityRole, NamedSeededUserOptions>
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AppDatabaseInitializer"/>
+    /// class.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    public AppDatabaseInitializer(IServiceProvider serviceProvider)
+        : base(serviceProvider)
+    {
+    }
+
+    /// <summary>
+    /// Initializes the user.
+    /// </summary>
+    /// <param name="user">The user.</param>
+    /// <param name="options">The options.</param>
+    protected override void InitUser(NamedUser user,
+        NamedSeededUserOptions options)
+    {
+        base.InitUser(user, options);
+
+        user.FirstName = options.FirstName;
+        user.LastName = options.LastName;
+    }
+
     private static string LoadResourceText(string name)
     {
         using StreamReader reader = new(

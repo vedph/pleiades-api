@@ -265,11 +265,11 @@ public static class Program
         string csTemplate = config.GetConnectionString("Auth")!;
         string dbName = config.GetValue<string>("DatabaseNames:Auth")!;
         string cs = string.Format(CultureInfo.InvariantCulture, csTemplate, dbName);
-        services.AddDbContext<ApplicationDbContext>(
+        services.AddDbContext<AppDbContext>(
             options => options.UseNpgsql(cs));
 
         services.AddIdentity<NamedUser, IdentityRole>()
-            .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
 
         // authentication service

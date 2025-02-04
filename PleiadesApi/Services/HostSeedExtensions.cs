@@ -18,8 +18,7 @@ public static class HostSeedExtensions
 {
     private static Task SeedAsync(IServiceProvider serviceProvider)
     {
-        ApplicationDatabaseInitializer initializer = new(serviceProvider);
-
+        AppDatabaseInitializer initializer = new(serviceProvider);
         return Policy.Handle<DbException>()
             .WaitAndRetry(
             [

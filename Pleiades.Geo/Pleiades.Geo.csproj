@@ -17,8 +17,8 @@
   <ItemGroup>
     <PackageReference Include="Fusi.Tools" Version="6.0.0" />
     <PackageReference Include="GeoJSON" Version="2.3.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
-    <PackageReference Include="Npgsql" Version="9.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.1" />
+    <PackageReference Include="Npgsql" Version="9.0.2" />
   </ItemGroup>
 
 </Project>

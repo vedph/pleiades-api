@@ -22,8 +22,6 @@
     - [Search](#search)
     - [JSON File](#json-file)
   - [History](#history)
-    - [2.0.0](#200)
-    - [1.0.0](#100)
 
 Thus project includes a CLI tool to import the Pleiades JSON dataset from its full-blown JSON file dump into a specially designed PostgreSQL database; a core search layer; and an API wrapper.
 
@@ -737,6 +735,8 @@ Here is the tree from the root object:
     - history[] (`EditAction[]`)
 
 ## History
+
+- 2025-02-04: updated packages and auth code.
 
 ### 2.0.0
 

@@ -1,22 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-	<Nullable>enable</Nullable>
-	<Version>2.0.0</Version>
-	<FileVersion>2.0.0</FileVersion>
-	<AssemblyVersion>2.0.0</AssemblyVersion>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<Version>2.0.0</Version>
+		<FileVersion>2.0.0</FileVersion>
+		<AssemblyVersion>2.0.0</AssemblyVersion>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Embix.Core" Version="4.0.0" />
-    <PackageReference Include="Embix.Search" Version="4.0.0" />
-    <PackageReference Include="Fusi.Tools" Version="6.0.0" />
-    <PackageReference Include="SqlKata" Version="2.4.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Embix.Core" Version="4.0.1" />
+		<PackageReference Include="Embix.Search" Version="4.0.1" />
+		<PackageReference Include="Fusi.Tools" Version="6.0.0" />
+		<PackageReference Include="SqlKata" Version="4.0.1" />
+		<PackageReference Include="SqlKata.Execution" Version="4.0.1" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Pleiades.Core\Pleiades.Core.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Pleiades.Core\Pleiades.Core.csproj" />
+	</ItemGroup>
 
 </Project>
