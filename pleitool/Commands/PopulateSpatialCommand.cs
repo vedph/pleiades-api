@@ -2,6 +2,7 @@
 using Fusi.DbManager.PgSql;
 using Microsoft.Extensions.Configuration;
 using Pleiades.Cli.Services;
+using Pleiades.Ef;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using System.ComponentModel;
@@ -34,8 +35,22 @@ internal sealed class PopulateSpatialCommand :
             .GetConnectionString("Default")!;
 
         IDbManager manager = new PgSqlDbManager(csTemplate);
-        string sql = LoadResourceText("Spatial.pgsql");
-        manager.ExecuteCommands(settings.DbName, sql.Split(';'));
+
+        AnsiConsole.Status().Start("Populating spatial data...", ctx =>
+        {
+            manager.ExecuteCommands(settings.DbName,
+                LoadResourceText("Spatial.pgsql").Split(';'));
+
+            // ensure that all the indexes are present (this also upgrades
+            // databases created by previous versions)
+            ctx.Status("Creating indexes...");
+            manager.ExecuteCommands(settings.DbName,
+                PleiadesDbSchema.GetIndexes().Split(';'));
+
+            ctx.Status("Analyzing...");
+            manager.ExecuteCommands(settings.DbName, "ANALYZE;");
+        });
+        AnsiConsole.MarkupLine("[green]Completed.[/]");
 
         return Task.FromResult(0);
     }

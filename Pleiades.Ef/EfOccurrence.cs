@@ -1,5 +1,8 @@
 ﻿namespace Pleiades.Ef;
 
+/// <summary>
+/// A token's occurrence in the text index.
+/// </summary>
 public sealed class EfOccurrence
 {
     /// <summary>
@@ -8,9 +11,9 @@ public sealed class EfOccurrence
     public int Id { get; set; }
 
     /// <summary>
-    /// Gets or sets the token entity identifier.
+    /// Gets or sets the token identifier.
     /// </summary>
-    public string? TokenId { get; set; }
+    public int TokenId { get; set; }
 
     /// <summary>
     /// Gets or sets the 5-letters field code.
@@ -18,19 +21,24 @@ public sealed class EfOccurrence
     public string? Field { get; set; }
 
     /// <summary>
+    /// Gets or sets the target place identifier.
+    /// </summary>
+    public string? TargetId { get; set; }
+
+    /// <summary>
     /// Gets or sets the rank.
     /// </summary>
-    public byte Rank { get; set; }
+    public int? Rank { get; set; }
 
     /// <summary>
-    /// Gets or sets the minimum language.
+    /// Gets or sets the minimum year.
     /// </summary>
-    public short YearMin { get; set; }
+    public short? YearMin { get; set; }
 
     /// <summary>
-    /// Gets or sets the maximum language.
+    /// Gets or sets the maximum year.
     /// </summary>
-    public short YearMax { get; set; }
+    public short? YearMax { get; set; }
 
     /// <summary>
     /// Gets or sets the parent token.
@@ -45,6 +53,6 @@ public sealed class EfOccurrence
     /// </returns>
     public override string ToString()
     {
-        return $"{Id}: [{Field}] {TokenId} ({YearMin}-{YearMax})";
+        return $"{Id}: [{Field}] {TokenId}@{TargetId} ({YearMin}-{YearMax})";
     }
 }

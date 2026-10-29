@@ -1,7 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.Extensions.Logging;
 using Pleiades.Ef;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Pleiades.Migration;
 
@@ -10,12 +13,17 @@ namespace Pleiades.Migration;
 /// <see cref="PleiadesDbContext"/> (built via a received
 /// <see cref="IPleiadesContextFactory"/>) to write places into a database,
 /// by repeatedly filling and flushing an internal cache to maximize
-/// performance.
+/// performance. The context change tracker is cleared after each flush,
+/// so that its size (and the cost of detecting changes) does not grow
+/// with the count of imported places.
 /// </summary>
 public sealed class EfPleiadesWriter : IDisposable
 {
     private readonly List<EfPlace> _places;
     private readonly PleiadesDbContext _context;
+    // authors are the only entities shared across places: once saved,
+    // they must not be inserted again by later places referring to them
+    private readonly HashSet<string> _savedAuthorIds;
     private bool _disposedValue;
 
     /// <summary>
@@ -32,13 +40,37 @@ public sealed class EfPleiadesWriter : IDisposable
     /// Initializes a new instance of the <see cref="EfPleiadesWriter"/> class.
     /// </summary>
     /// <param name="factory">The Pleiades DB context factory.</param>
-    /// <exception cref="ArgumentNullException">context</exception>
+    /// <exception cref="ArgumentNullException">factory</exception>
     public EfPleiadesWriter(IPleiadesContextFactory factory)
     {
-        _places = new List<EfPlace>();
-        // TODO: get new context at each flush
+        ArgumentNullException.ThrowIfNull(factory);
+
+        _places = [];
+        _savedAuthorIds = [];
         _context = factory.GetContext();
         CacheSize = 50;
+    }
+
+    private void SaveAndClear()
+    {
+        // authors already saved are tracked as added when reached from
+        // the newly added graphs: mark them as unchanged
+        foreach (EntityEntry<EfAuthor> entry in _context.ChangeTracker
+            .Entries<EfAuthor>()
+            .Where(e => e.State == EntityState.Added
+                && _savedAuthorIds.Contains(e.Entity.Id!)))
+        {
+            entry.State = EntityState.Unchanged;
+        }
+
+        _context.SaveChanges();
+
+        foreach (EntityEntry<EfAuthor> entry in _context.ChangeTracker
+            .Entries<EfAuthor>())
+        {
+            _savedAuthorIds.Add(entry.Entity.Id!);
+        }
+        _context.ChangeTracker.Clear();
     }
 
     /// <summary>
@@ -64,12 +96,13 @@ public sealed class EfPleiadesWriter : IDisposable
         ArgumentNullException.ThrowIfNull(lookups);
 
         _context.Lookups.AddRange(lookups);
-        _context.SaveChanges();
+        SaveAndClear();
     }
 
     /// <summary>
     /// Resolves the pending connections and place links, writing them
-    /// into the database.
+    /// into the database. Unresolved links are logged and skipped, and
+    /// duplicate place links are written once.
     /// </summary>
     /// <param name="links">The links.</param>
     /// <exception cref="ArgumentNullException">links</exception>
@@ -77,36 +110,38 @@ public sealed class EfPleiadesWriter : IDisposable
     {
         ArgumentNullException.ThrowIfNull(links);
 
-        List<EfConnection> resConnections = new();
-        List<EfPlaceLink> resLinks = new();
+        List<EfConnection> resConnections = [];
+        List<EfPlaceLink> resLinks = [];
+        HashSet<(string, string)> linkKeys = [];
 
         foreach (PendingLink link in links)
         {
             if (link.ResolvedId == null)
             {
-                Logger?.LogError($"Unresolved link ID: {link}");
+                Logger?.LogError("Unresolved link ID: {Link} ({Target})",
+                    link, link.OriginalId);
                 continue;
             }
 
-            EfConnection efc = link.Payload as EfConnection;
-            if (efc != null)
+            switch (link.Payload)
             {
-                efc.TargetId = link.ResolvedId;
-                resConnections.Add(efc);
-            }
-            else
-            {
-                EfPlaceLink efl = link.Payload as EfPlaceLink;
-                efl.TargetId = link.ResolvedId;
-                resLinks.Add(efl);
+                case EfConnection efc:
+                    efc.TargetId = link.ResolvedId;
+                    resConnections.Add(efc);
+                    break;
+                case EfPlaceLink efl:
+                    efl.TargetId = link.ResolvedId;
+                    if (linkKeys.Add((efl.SourceId!, efl.TargetId)))
+                        resLinks.Add(efl);
+                    break;
             }
         }
 
         _context.Connections.AddRange(resConnections);
-        _context.SaveChanges();
+        SaveAndClear();
 
         _context.PlaceLinks.AddRange(resLinks);
-        _context.SaveChanges();
+        SaveAndClear();
     }
 
     /// <summary>
@@ -117,7 +152,7 @@ public sealed class EfPleiadesWriter : IDisposable
         if (_places.Count == 0) return;
 
         _context.Places.AddRange(_places);
-        _context.SaveChanges();
+        SaveAndClear();
         _places.Clear();
     }
 
@@ -125,7 +160,11 @@ public sealed class EfPleiadesWriter : IDisposable
     {
         if (!_disposedValue)
         {
-            if (disposing) Flush();
+            if (disposing)
+            {
+                Flush();
+                _context.Dispose();
+            }
             _disposedValue = true;
         }
     }

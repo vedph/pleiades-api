@@ -226,7 +226,7 @@ public sealed class PleiadesDbContext : DbContext
 
         // place_attestation
         modelBuilder.Entity<EfPlaceAttestation>()
-            .ToTable("place_attestations");
+            .ToTable("place_attestation");
         modelBuilder.Entity<EfPlaceAttestation>().Property(a => a.Id)
             .IsRequired()
             .ValueGeneratedOnAdd();
@@ -562,46 +562,39 @@ public sealed class PleiadesDbContext : DbContext
         modelBuilder.Entity<EfNameReference>().Property(r => r.OtherId)
             .HasMaxLength(500);
 
-        // eix_token
+        // eix_token (written by Embix: only id, value, language)
         modelBuilder.Entity<EfToken>().ToTable("eix_token");
         modelBuilder.Entity<EfToken>().Property(r => r.Id)
             .IsRequired()
             .ValueGeneratedOnAdd();
-        modelBuilder.Entity<EfToken>().Property(r => r.TargetId)
-            .IsRequired()
-            .HasMaxLength(20);
-        modelBuilder.Entity<EfToken>().Property(r => r.Field)
-            .IsRequired()
-            .IsUnicode(false)
-            .HasMaxLength(5)
-            .IsFixedLength();
         modelBuilder.Entity<EfToken>().Property(r => r.Value)
             .IsRequired()
             .HasMaxLength(100);
-        modelBuilder.Entity<EfToken>().Property(r => r.Rank)
-            .IsRequired();
         modelBuilder.Entity<EfToken>().Property(r => r.Language)
             .HasMaxLength(5);
-        modelBuilder.Entity<EfToken>().Property(r => r.YearMin).IsRequired();
-        modelBuilder.Entity<EfToken>().Property(r => r.YearMax).IsRequired();
+        modelBuilder.Entity<EfToken>().Ignore(r => r.TargetId);
+        modelBuilder.Entity<EfToken>().Ignore(r => r.Field);
+        modelBuilder.Entity<EfToken>().Ignore(r => r.Rank);
+        modelBuilder.Entity<EfToken>().Ignore(r => r.YearMin);
+        modelBuilder.Entity<EfToken>().Ignore(r => r.YearMax);
 
-        // eix_occurrence
+        // eix_occurrence (written by Embix)
         modelBuilder.Entity<EfOccurrence>().ToTable("eix_occurrence");
         modelBuilder.Entity<EfOccurrence>().Property(r => r.Id)
             .IsRequired()
             .ValueGeneratedOnAdd();
         modelBuilder.Entity<EfOccurrence>().Property(r => r.TokenId)
-            .IsRequired()
-            .HasMaxLength(20);
+            .IsRequired();
         modelBuilder.Entity<EfOccurrence>().Property(r => r.Field)
             .IsRequired()
-            .IsUnicode(false)
-            .HasMaxLength(5)
-            .IsFixedLength();
-        modelBuilder.Entity<EfOccurrence>().Property(r => r.Rank)
-            .IsRequired();
-        modelBuilder.Entity<EfOccurrence>().Property(r => r.YearMin).IsRequired();
-        modelBuilder.Entity<EfOccurrence>().Property(r => r.YearMax).IsRequired();
+            .HasMaxLength(5);
+        modelBuilder.Entity<EfOccurrence>().Property(r => r.TargetId)
+            .IsRequired()
+            .HasMaxLength(20);
+        modelBuilder.Entity<EfOccurrence>()
+            .HasOne(o => o.Token)
+            .WithMany(t => t.Occurrences)
+            .HasForeignKey(o => o.TokenId);
 
         base.OnModelCreating(modelBuilder);
     }

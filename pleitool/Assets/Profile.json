@@ -63,7 +63,7 @@
     {
       "Id": "place",
       "CountSql": "SELECT COUNT(*) FROM place;",
-      "DataSql": "SELECT title AS plttl, description AS pldsc, details AS pldtl, review_state_id AS m_state, title AS m_raw_title, id AS m_target_id FROM place ORDER BY place.id LIMIT {1} OFFSET {0};",
+      "DataSql": "SELECT title AS plttl, description AS pldsc, details AS pldtl, review_state_id AS m_state, title AS m_raw_title, id AS m_target_id FROM place;",
       "TextFilterChains": {
         "*": "tag-sep-wsp-std"
       },
@@ -74,7 +74,7 @@
     {
       "Id": "location",
       "CountSql": "SELECT COUNT(*) FROM location;",
-      "DataSql": "SELECT title AS lcttl, certainty_id AS m_certainty, review_state_id AS m_state, place_id AS m_target_id FROM location ORDER BY location.id LIMIT {1} OFFSET {0};",
+      "DataSql": "SELECT title AS lcttl, CASE WHEN start_year=0 AND end_year=0 THEN NULL ELSE start_year END AS m_year_min, CASE WHEN start_year=0 AND end_year=0 THEN NULL ELSE end_year END AS m_year_max, certainty_id AS m_certainty, review_state_id AS m_state, place_id AS m_target_id FROM location;",
       "TextFilterChains": {
         "*": "tag-sep-wsp-std"
       },
@@ -85,7 +85,7 @@
     {
       "Id": "name",
       "CountSql": "SELECT COUNT(*) FROM name;",
-      "DataSql": "SELECT romanized AS nmrmz, attested AS nmatt, description AS nmdsc, start_year AS m_year_min, end_year AS m_year_max, review_state_id AS m_state, romanized AS m_raw_romanized, place_id AS m_target_id FROM name ORDER BY name.id LIMIT {1} OFFSET {0};",
+      "DataSql": "SELECT romanized AS nmrmz, attested AS nmatt, description AS nmdsc, CASE WHEN start_year=0 AND end_year=0 THEN NULL ELSE start_year END AS m_year_min, CASE WHEN start_year=0 AND end_year=0 THEN NULL ELSE end_year END AS m_year_max, review_state_id AS m_state, romanized AS m_raw_romanized, place_id AS m_target_id FROM name;",
       "TextFilterChains": {
         "*": "tag-sep-wsp-std"
       },

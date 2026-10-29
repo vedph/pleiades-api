@@ -614,7 +614,6 @@ public sealed class EfPlaceAdapter
                     continue;
 
                 links.Add(GetPendingLink(source.Id!, uri));
-                i++;
             }
         }
 
@@ -674,7 +673,7 @@ public sealed class PendingLink
     /// <see cref="SourceId"/> is read. So, at the end of the read process
     /// all the pending links should have been resolved, and can be written.
     /// </summary>
-    public string ResolvedId { get; set; }
+    public string? ResolvedId { get; set; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PendingLink"/> class.

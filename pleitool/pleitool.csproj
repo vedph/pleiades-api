@@ -43,12 +43,12 @@
     <ProjectReference Include="..\Pleiades.Geo\Pleiades.Geo.csproj" />
     <ProjectReference Include="..\Pleiades.Index\Pleiades.Index.csproj" />
     <ProjectReference Include="..\Pleiades.Migration\Pleiades.Migration.csproj" />
-    <ProjectReference Include="..\Pleiades.Search\Pleiades.Search.csproj" />
+    <ProjectReference Include="..\Pleiades.Search.PgSql\Pleiades.Search.PgSql.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Embix.PgSql" Version="4.0.1" />
-    <PackageReference Include="Embix.Plugin.Greek" Version="4.0.1" />
+    <PackageReference Include="Embix.PgSql" Version="5.0.0" />
+    <PackageReference Include="Embix.Plugin.Greek" Version="5.0.0" />
     <PackageReference Include="Fusi.DbManager" Version="6.0.4" />
     <PackageReference Include="Fusi.DbManager.PgSql" Version="6.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.14">

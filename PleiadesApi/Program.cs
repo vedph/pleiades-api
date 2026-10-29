@@ -1,41 +1,41 @@
+using Fusi.Api.Auth.Controllers;
+using Fusi.Api.Auth.Models;
+using Fusi.Api.Auth.Services;
+using Fusi.DbManager.PgSql;
+using MessagingApi;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Logging;
+using NpgsqlTypes;
+using Pleiades.Search;
+using Pleiades.Search.PgSql;
+using PleiadesApi.Services;
+using Scalar.AspNetCore;
+using Serilog;
+using Serilog.Events;
+using Serilog.Sinks.PostgreSQL;
+using Serilog.Sinks.PostgreSQL.ColumnWriters;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using Serilog.Sinks.PostgreSQL;
-using Serilog.Sinks.PostgreSQL.ColumnWriters;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
-using Serilog;
-using Serilog.Events;
-using System.Threading.Tasks;
-using PleiadesApi.Services;
-using MessagingApi;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using System.Globalization;
-using Microsoft.AspNetCore.Builder;
-using System.Threading.RateLimiting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Options;
-using Fusi.Api.Auth.Models;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Logging;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Fusi.DbManager.PgSql;
-using NpgsqlTypes;
-using System.Text.RegularExpressions;
-using Microsoft.Extensions.Logging;
-using Fusi.Api.Auth.Services;
+using System.Linq;
 using System.Text.Json;
-using Microsoft.AspNetCore.HttpOverrides;
-using Scalar.AspNetCore;
-using Pleiades.Search.PgSql;
-using Pleiades.Search;
+using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.RateLimiting;
+using System.Threading.Tasks;
 
 namespace PleiadesApi;
 
@@ -47,31 +47,30 @@ public static class Program
     // startup log file name, Serilog is configured later via appsettings.json
     private const string STARTUP_LOG_NAME = "startup.log";
 
+    private static readonly string[] _secretKeyParts =
+        ["KEY", "PASSWORD", "SECRET", "TOKEN", "CONNECTIONSTRING"];
+
+    // the last time a rate limit notification was sent (ticks)
+    private static long _lastLimitNotification;
+
     /// <summary>
-    /// Dumps the environment variables in the log.
+    /// Dumps the environment variables in the log, masking secrets.
     /// </summary>
     private static void DumpEnvironmentVars()
     {
         Log.Information("ENVIRONMENT VARIABLES:");
         IDictionary dct = Environment.GetEnvironmentVariables();
-        List<string> keys = [];
-        var enumerator = dct.GetEnumerator();
-        while (enumerator.MoveNext())
+        foreach (string key in dct.Keys.Cast<object>()
+            .Select(k => k.ToString()!).Order())
         {
-            keys.Add(((DictionaryEntry)enumerator.Current).Key.ToString()!);
+            bool secret = _secretKeyParts.Any(p =>
+                key.Contains(p, StringComparison.OrdinalIgnoreCase));
+            Log.Information("{Key} = {Value}", key, secret ? "***" : dct[key]);
         }
-
-        foreach (string key in keys.Order())
-            Log.Information("{Key} = {Value}", key, dct[key]);
     }
 
-    #region Options
-    /// <summary>
-    /// Configures the options services providing typed configuration objects.
-    /// </summary>
-    /// <param name="services">The services.</param>
-    /// <param name="config">The configuration.</param>
-    private static void ConfigureOptionsServices(IServiceCollection services,
+    #region Messaging
+    private static void ConfigureMessagingServices(IServiceCollection services,
         IConfiguration config)
     {
         // configuration sections
@@ -84,6 +83,11 @@ public static class Program
             resolver.GetRequiredService<IOptions<MessagingOptions>>().Value);
         services.AddSingleton(resolver =>
             resolver.GetRequiredService<IOptions<DotNetMailerOptions>>().Value);
+
+        // you can use another mailer service here
+        services.AddScoped<IMailerService, DotNetMailerService>();
+        services.AddScoped<IMessageBuilderService,
+            FileMessageBuilderService>();
     }
     #endregion
 
@@ -107,7 +111,9 @@ public static class Program
                 .AllowAnyHeader()
                 // https://github.com/aspnet/SignalR/issues/2110 for AllowCredentials
                 .AllowCredentials()
-                .WithOrigins(origins);
+                .WithOrigins(origins)
+                // let clients read the header telling that a JWT expired
+                .WithExposedHeaders("Token-Expired");
         }));
     }
     #endregion
@@ -123,12 +129,25 @@ public static class Program
             return;
         }
 
+        // notify at most once per time window, so that a flood of rejected
+        // requests does not become a flood of email messages
+        int minutes = Math.Max(1,
+            config.GetValue("RateLimit:NotificationIntervalMinutes", 60));
+        long now = DateTime.UtcNow.Ticks;
+        long last = Interlocked.Read(ref _lastLimitNotification);
+        if (now - last < TimeSpan.FromMinutes(minutes).Ticks
+            || Interlocked.CompareExchange(ref _lastLimitNotification,
+                now, last) != last)
+        {
+            return;
+        }
+
         // recipients must be set
         IConfigurationSection recSection = config.GetSection("Mailer:Recipients");
         if (!recSection.Exists()) return;
-        string[] recipients = recSection.AsEnumerable()
+        string[] recipients = [.. recSection.AsEnumerable()
             .Where(p => !string.IsNullOrEmpty(p.Value))
-            .Select(p => p.Value!).ToArray();
+            .Select(p => p.Value!)];
         if (recipients.Length == 0)
         {
             Log.Information("No recipients for limit notification");
@@ -145,7 +164,8 @@ public static class Program
         Message? message = messageBuilder.BuildMessage("rate-limit-exceeded",
             new Dictionary<string, string>()
             {
-                ["EventTime"] = DateTime.UtcNow.ToString()
+                ["EventTime"] = DateTime.UtcNow.ToString(
+                    "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)
             });
         if (message == null)
         {
@@ -160,12 +180,16 @@ public static class Program
 
         foreach (string recipient in recipients)
         {
-            Log.Logger.Information("Sending rate email message");
-            await mailer.SendEmailAsync(
-                recipient,
-                "Test Recipient",
-                message);
-            Log.Logger.Information("Email message sent");
+            try
+            {
+                Log.Information("Sending rate email message");
+                await mailer.SendEmailAsync(recipient, "Test Recipient", message);
+                Log.Information("Email message sent");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error sending rate limit notification");
+            }
         }
     }
 
@@ -189,13 +213,8 @@ public static class Program
 
         // TimeWindow (00:01:00 = HH:MM:SS)
         string? windowText = limit.GetValue<string>("TimeWindow");
-        TimeSpan window;
-        if (!string.IsNullOrEmpty(windowText))
-        {
-            if (!TimeSpan.TryParse(windowText, CultureInfo.InvariantCulture, out window))
-                window = TimeSpan.FromMinutes(1);
-        }
-        else
+        if (string.IsNullOrEmpty(windowText) || !TimeSpan.TryParse(windowText,
+            CultureInfo.InvariantCulture, out TimeSpan window))
         {
             window = TimeSpan.FromMinutes(1);
         }
@@ -206,7 +225,7 @@ public static class Program
 
         // https://blog.maartenballiauw.be/post/2022/09/26/aspnet-core-rate-limiting-middleware.html
         // default = 10 requests per minute, per authenticated username,
-        // or hostname if not authenticated.
+        // or IP address if not authenticated.
         services.AddRateLimiter(options =>
         {
             options.GlobalLimiter = PartitionedRateLimiter
@@ -215,7 +234,6 @@ public static class Program
                     string key = httpContext.User.Identity?.Name
                         ?? httpContext.Connection.RemoteIpAddress?.ToString()
                         ?? "unknown";
-                    Log.Information("Rate limit key: {Key}", key);
 
                     return RateLimitPartition.GetFixedWindowLimiter(
                         partitionKey: key,
@@ -233,27 +251,22 @@ public static class Program
                 Log.Warning("Rate limit exceeded");
 
                 // 429 too many requests
-                context.HttpContext.Response.StatusCode = 429;
+                context.HttpContext.Response.StatusCode =
+                    StatusCodes.Status429TooManyRequests;
+                context.HttpContext.Response.ContentType = "application/json";
 
-                // send
-                await NotifyLimitExceededToRecipients(config, hostEnvironment);
+                // notify without delaying the response
+                _ = NotifyLimitExceededToRecipients(config, hostEnvironment);
 
                 // ret JSON with error
-                if (context.Lease.TryGetMetadata(MetadataName.RetryAfter,
-                    out var retryAfter))
-                {
-                    await context.HttpContext.Response.WriteAsync("{\"error\": " +
-                        "\"Too many requests. Please try again after " +
-                        $"{retryAfter.TotalMinutes} minute(s).\"" +
-                        "}", cancellationToken: token);
-                }
-                else
-                {
-                    await context.HttpContext.Response.WriteAsync(
-                        "{\"error\": " +
-                        "\"Too many requests. Please try again later.\"" +
-                        "}", cancellationToken: token);
-                }
+                string error = context.Lease.TryGetMetadata(
+                    MetadataName.RetryAfter, out var retryAfter)
+                    ? "Too many requests. Please try again after " +
+                      $"{Math.Ceiling(retryAfter.TotalMinutes)} minute(s)."
+                    : "Too many requests. Please try again later.";
+                await context.HttpContext.Response.WriteAsync(
+                    JsonSerializer.Serialize(new { error }),
+                    cancellationToken: token);
             };
         });
     }
@@ -266,75 +279,31 @@ public static class Program
         string csTemplate = config.GetConnectionString("Auth")!;
         string dbName = config.GetValue<string>("DatabaseNames:Auth")!;
         string cs = string.Format(CultureInfo.InvariantCulture, csTemplate, dbName);
-        services.AddDbContext<AppDbContext>(
-            options => options.UseNpgsql(cs));
+        services.AddDbContext<AppDbContext>(options => options.UseNpgsql(cs));
 
-        services.AddIdentity<NamedUser, IdentityRole>()
+        services.AddIdentity<NamedUser, IdentityRole>(options =>
+            {
+                // see IdentityOptions for password, lockout, user policies
+                options.User.RequireUniqueEmail = true;
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+            })
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
 
-        // authentication service
-        services
-            .AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme =
-                    JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme =
-                    JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultScheme =
-                    JwtBearerDefaults.AuthenticationScheme;
-            })
-        .AddJwtBearer(options =>
-        {
-            // NOTE: remember to set the values in configuration:
-            // Jwt:SecureKey, Jwt:Audience, Jwt:Issuer
-            IConfigurationSection jwtSection = config.GetSection("Jwt");
-            string? key = jwtSection["SecureKey"];
-            if (string.IsNullOrEmpty(key))
-                throw new InvalidOperationException("Required JWT SecureKey not found");
-
-            options.SaveToken = true;
-            options.RequireHttpsMetadata = false;
-            options.TokenValidationParameters = new TokenValidationParameters()
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidAudience = jwtSection["Audience"],
-                ValidIssuer = jwtSection["Issuer"],
-                IssuerSigningKey = new SymmetricSecurityKey(
-                    Encoding.UTF8.GetBytes(key))
-            };
-
-            // support refresh
-            // https://stackoverflow.com/questions/55150099/jwt-token-expiration-time-failing-net-core
-            options.Events = new JwtBearerEvents
-            {
-                OnAuthenticationFailed = context =>
-                {
-                    if (context.Exception.GetType() ==
-                            typeof(SecurityTokenExpiredException))
-                    {
-                        context.Response.Headers.Append("Token-Expired", "true");
-                    }
-                    return Task.CompletedTask;
-                }
-            };
-        });
+        // JWT authentication, configured from the Jwt section, i.e. the
+        // same options used to issue tokens: Jwt:SecureKey (at least 32
+        // chars), Jwt:Issuer, Jwt:Audience, and the optional
+        // Jwt:ExpirationMinutes and Jwt:ClockSkewSeconds
+        services.AddJwtBearerAuthentication(config);
 #if DEBUG
         // use to show more information when troubleshooting JWT issues
         IdentityModelEventSource.ShowPII = true;
 #endif
-    }
-    #endregion
 
-    #region Messaging
-    private static void ConfigureMessagingServices(IServiceCollection services)
-    {
-        // you can use another mailer service here. In this case,
-        // also change the types in ConfigureOptionsServices.
-        services.AddScoped<IMailerService, DotNetMailerService>();
-        services.AddScoped<IMessageBuilderService,
-            FileMessageBuilderService>();
+        // user repository service
+        services.AddScoped<IUserRepository<NamedUser>,
+            UserRepository<NamedUser, IdentityRole>>();
     }
     #endregion
 
@@ -342,7 +311,7 @@ public static class Program
     private static bool IsAuditEnabledFor(IConfiguration config, string key)
     {
         bool? value = config.GetValue<bool?>($"Auditing:{key}");
-        return value != null && value != false;
+        return value == true;
     }
 
     private static void ConfigurePostgreLogging(HostBuilderContext context,
@@ -398,15 +367,6 @@ public static class Program
             needAutoCreateTable: true);
     }
 
-    private static void ConfigureLogging(IServiceCollection services)
-    {
-        services.AddSingleton(sp =>
-        {
-            ILoggerFactory factory = sp.GetRequiredService<ILoggerFactory>();
-            return factory.CreateLogger("Logger");
-        });
-    }
-
     private static void ConfigureLogger(WebApplicationBuilder builder)
     {
         builder.Host.UseSerilog((hostingContext, loggerConfiguration) =>
@@ -418,7 +378,7 @@ public static class Program
             if (IsAuditEnabledFor(hostingContext.Configuration, "File"))
             {
                 Console.WriteLine("Logging to file enabled");
-                loggerConfiguration.WriteTo.File("cadmus.log",
+                loggerConfiguration.WriteTo.File("pleiades.log",
                     rollingInterval: RollingInterval.Day);
             }
 
@@ -440,10 +400,6 @@ public static class Program
     private static void ConfigureServices(IServiceCollection services,
         IConfiguration config, IHostEnvironment hostEnvironment)
     {
-        // configuration
-        services.AddSingleton(_ => config);
-        ConfigureOptionsServices(services, config);
-
         // security
         ConfigureCorsServices(services, config);
         ConfigureRateLimiterService(services, config, hostEnvironment);
@@ -453,30 +409,40 @@ public static class Program
         services.AddHttpClient();
         services.AddResponseCaching();
 
-        // API controllers
-        services.AddControllers();
-        // camel-case JSON in response
-        services.AddMvc()
-            // https://docs.microsoft.com/en-us/aspnet/core/migration/22-to-30?view=aspnetcore-2.2&tabs=visual-studio#jsonnet-support
+        // API controllers, with camel-case JSON and enums as strings
+        services.AddControllers()
             .AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.PropertyNamingPolicy =
                     JsonNamingPolicy.CamelCase;
+                options.JsonSerializerOptions.Converters.Add(
+                    new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
             });
+        services.AddProblemDetails();
 
         // framework services
         // IMemoryCache: https://docs.microsoft.com/en-us/aspnet/core/performance/caching/memory
         services.AddMemoryCache();
 
-        // user repository service
-        services.AddScoped<IUserRepository<NamedUser>,
-            UserRepository<NamedUser, IdentityRole>>();
-
         // messaging
-        ConfigureMessagingServices(services);
+        ConfigureMessagingServices(services, config);
 
         // logging
-        ConfigureLogging(services);
+        services.AddSingleton(sp =>
+        {
+            ILoggerFactory factory = sp.GetRequiredService<ILoggerFactory>();
+            return factory.CreateLogger("Logger");
+        });
+
+        // Pleiades search: stateless and thread-safe (each call uses its own
+        // pooled connection), so it is a singleton
+        services.AddSingleton<IQuickSearch>(_ => new PgSqlQuickSearch(
+            string.Format(CultureInfo.InvariantCulture,
+                config.GetConnectionString("Default")!,
+                config.GetValue<string>("DatabaseNames:Data"))));
+
+        // open API
+        services.AddOpenApi();
     }
 
     /// <summary>
@@ -498,27 +464,21 @@ public static class Program
 
         try
         {
-            Log.Information("Starting Cadmus API host");
+            Log.Information("Starting Pleiades API host");
             DumpEnvironmentVars();
 
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
             ConfigureLogger(builder);
 
-            IConfiguration config = new ConfigurationService(builder.Environment)
-                .Configuration;
-
+            // appsettings.json, appsettings.{Environment}.json, environment
+            // variables (e.g. Jwt__SecureKey), command line arguments
+            IConfiguration config = builder.Configuration;
             ConfigureServices(builder.Services, config, builder.Environment);
-            // pleiades
-            builder.Services.AddScoped<IQuickSearch>((_) =>
-            {
-                return new PgSqlQuickSearch(
-                    string.Format(config.GetConnectionString("Default")!,
-                    config.GetValue<string>("DatabaseName")));
-            });
-
-            builder.Services.AddOpenApi();
 
             WebApplication app = builder.Build();
+
+            // seed database (via Services/HostSeedExtension)
+            await app.SeedAsync();
 
             // forward headers for use with an eventual reverse proxy
             app.UseForwardedHeaders(new ForwardedHeadersOptions
@@ -528,14 +488,14 @@ public static class Program
             });
 
             // development or production
-            if (builder.Environment.IsDevelopment())
+            if (app.Environment.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
             else
             {
-                // https://docs.microsoft.com/en-us/aspnet/core/security/enforcing-ssl?view=aspnetcore-5.0&tabs=visual-studio
-                app.UseExceptionHandler("/Error");
+                // unhandled exceptions become problem details (500)
+                app.UseExceptionHandler();
                 if (config.GetValue<bool>("Server:UseHSTS"))
                 {
                     Console.WriteLine("HSTS: yes");
@@ -546,6 +506,7 @@ public static class Program
                     Console.WriteLine("HSTS: no");
                 }
             }
+            app.UseStatusCodePages();
 
             // HTTPS redirection
             if (config.GetValue<bool>("Server:UseHttpsRedirection"))
@@ -560,17 +521,15 @@ public static class Program
 
             // CORS
             app.UseCors("CorsPolicy");
+            // authentication (before the rate limiter, which partitions
+            // requests by user name when authenticated)
+            app.UseAuthentication();
+            app.UseAuthorization();
             // rate limiter
             if (!config.GetValue<bool>("RateLimit:IsDisabled"))
                 app.UseRateLimiter();
-            // authentication
-            app.UseAuthentication();
-            app.UseAuthorization();
             // proxy
             app.UseResponseCaching();
-
-            // seed database (via Services/HostSeedExtension)
-            await app.SeedAsync();
 
             // map controllers and Scalar API
             app.MapControllers();
@@ -588,7 +547,7 @@ public static class Program
         }
         catch (Exception ex)
         {
-            Log.Fatal(ex, "Cadmus API host terminated unexpectedly");
+            Log.Fatal(ex, "Pleiades API host terminated unexpectedly");
             Debug.WriteLine(ex.ToString());
             Console.WriteLine(ex.ToString());
             return 1;

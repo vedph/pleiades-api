@@ -1,4 +1,6 @@
-﻿namespace Pleiades.Search;
+﻿using System.Collections.Generic;
+
+namespace Pleiades.Search;
 
 /// <summary>
 /// The result of a quick search operation. This is a minimal set of data,
@@ -24,25 +26,32 @@ public class QuickSearchResult
     public string? Name { get; set; }
 
     /// <summary>
-    /// The place type.
+    /// The first place type, if any.
     /// </summary>
     public string? Type { get; set; }
 
     /// <summary>
-    /// Latitude.
+    /// All the place types.
     /// </summary>
-    public double Lat { get; set; }
+    public IList<string> Types { get; set; } = [];
 
     /// <summary>
-    /// Longitude.
+    /// Latitude of the representative point, or null when the place
+    /// is not located.
     /// </summary>
-    public double Lng { get; set; }
+    public double? Lat { get; set; }
 
     /// <summary>
-    /// A payload data object, usually representing the object returned
-    /// by the original geographic data provider.
+    /// Longitude of the representative point, or null when the place
+    /// is not located.
     /// </summary>
-    public dynamic? Payload { get; set; }
+    public double? Lng { get; set; }
+
+    /// <summary>
+    /// The distance in meters from the reference point, when a reference
+    /// point was specified and the place is located.
+    /// </summary>
+    public double? Distance { get; set; }
 
     /// <summary>
     /// Converts to string.

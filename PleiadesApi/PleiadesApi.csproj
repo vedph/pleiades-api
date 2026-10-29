@@ -6,19 +6,10 @@
 		<Version>2.0.0</Version>
 		<FileVersion>2.0.0</FileVersion>
 		<AssemblyVersion>2.0.0</AssemblyVersion>
+		<!-- XML comments are used by OpenAPI -->
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NoWarn>$(NoWarn);1591</NoWarn>
 	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<DocumentationFile>bin\Debug\net9.0\PleiadesApi.xml</DocumentationFile>
-	</PropertyGroup>
-
-	<ItemGroup>
-		<None Remove="Assets\Index.pgsql" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<EmbeddedResource Include="Assets\Index.pgsql" />
-	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Fusi.Api.Auth.Controllers" Version="7.1.0" />
@@ -45,6 +36,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\Pleiades.Ef.PgSql\Pleiades.Ef.PgSql.csproj" />
 		<ProjectReference Include="..\Pleiades.Ef\Pleiades.Ef.csproj" />
 		<ProjectReference Include="..\Pleiades.Search.PgSql\Pleiades.Search.PgSql.csproj" />
 		<ProjectReference Include="..\Pleiades.Search\Pleiades.Search.csproj" />

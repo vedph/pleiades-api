@@ -40,7 +40,7 @@ internal sealed class ImportGraphCommand : AsyncCommand<ImportGraphCommandSettin
                     flags |= PlaceChildFlags.Locations;
                     break;
                 case 'E':
-                    flags |= PlaceChildFlags.Connections;
+                    flags |= PlaceChildFlags.Creators;
                     break;
                 case 'A':
                     flags |= PlaceChildFlags.Attestations;
@@ -195,7 +195,7 @@ internal class ImportGraphCommandSettings : CommandSettings
     /// <summary>
     /// Gets or sets the flags to import only the specified children.
     /// </summary>
-    [CommandOption("-f|--flags <COLEARNMT0>")]
+    [CommandOption("-f|--flags <FCOELARNMT0>")]
     public string? Flags { get; set; }
 
     public ImportGraphCommandSettings()

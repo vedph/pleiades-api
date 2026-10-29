@@ -5,6 +5,7 @@ using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using Pleiades.Cli.Commands;
+using Pleiades.Cli.Services;
 using Spectre.Console.Cli;
 using Spectre.Console;
 
@@ -16,7 +17,7 @@ public static class Program
     private static void DeleteLogs()
     {
         foreach (var path in Directory.EnumerateFiles(
-            AppDomain.CurrentDomain.BaseDirectory, "pleiades-log*.txt"))
+            AppDomain.CurrentDomain.BaseDirectory, "pleitool-log*.txt"))
         {
             try
             {
@@ -34,23 +35,10 @@ public static class Program
     {
         try
         {
-            // https://github.com/serilog/serilog-sinks-file
-            string logFilePath = Path.Combine(
-                Path.GetDirectoryName(
-                    Assembly.GetExecutingAssembly().Location) ?? "",
-                    "pleiades-log.txt");
-            Log.Logger = new LoggerConfiguration()
-#if DEBUG
-                .MinimumLevel.Debug()
-#else
-                .MinimumLevel.Information()
-#endif
-                .Enrich.FromLogContext()
-                .WriteTo.File(logFilePath, rollingInterval: RollingInterval.Day)
-                .CreateLogger();
 #if DEBUG
             DeleteLogs();
 #endif
+            CliAppContext.ConfigureLogger();
             Stopwatch stopwatch = new();
             stopwatch.Start();
 

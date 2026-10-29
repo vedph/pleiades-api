@@ -1,13 +1,8 @@
-﻿-- Enable PostGIS (as of 3.0 contains just geometry/geography)
-CREATE EXTENSION postgis;
--- enable raster support (for 3+)
-CREATE EXTENSION postgis_raster;
--- Enable Topology
-CREATE EXTENSION postgis_topology;
--- Enable PostGIS Advanced 3D
--- and other geoprocessing algorithms
--- sfcgal not available with all distributions
-CREATE EXTENSION postgis_sfcgal;
+﻿-- PostGIS (as of 3.0 contains just geometry/geography): raster, topology
+-- and sfcgal are not used, and sfcgal is not available in all distributions
+CREATE EXTENSION IF NOT EXISTS postgis;
+-- trigrams for the text index (Embix) and substring searches
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- lookup
 CREATE TABLE public.lookup (
@@ -17,8 +12,6 @@ CREATE TABLE public.lookup (
 	"group" varchar(50) NULL,
 	CONSTRAINT lookup_pk PRIMARY KEY (id)
 );
-CREATE INDEX lookup_full_name_idx ON public.lookup (full_name);
-CREATE INDEX lookup_group_idx ON public.lookup ("group");
 
 -- author
 CREATE TABLE public.author (

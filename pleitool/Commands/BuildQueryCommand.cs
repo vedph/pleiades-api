@@ -1,8 +1,8 @@
 ﻿using Pleiades.Search;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using SqlKata;
-using SqlKata.Compilers;
+using Embix.Search;
+using Embix.Search.PgSql;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -17,13 +17,11 @@ namespace Pleiades.Cli.Commands;
 internal sealed class BuildQueryCommand : AsyncCommand
 {
     private readonly QuickSearchBuilder _builder;
-    private readonly Compiler _compiler;
     private QuickSearchRequest _request;
 
     public BuildQueryCommand()
     {
-        _builder = new QuickSearchBuilder();
-        _compiler = new PostgresCompiler();
+        _builder = new QuickSearchBuilder(new PgSqlDialect());
         _request = new QuickSearchRequest();
     }
 
@@ -95,7 +93,7 @@ internal sealed class BuildQueryCommand : AsyncCommand
 
         // distance pt and min max
         string current = $"{_request.Spatial.DistancePoint?.Longitude ?? 0}," +
-            $"{_request.Spatial.DistancePoint?.Longitude ?? 0}";
+            $"{_request.Spatial.DistancePoint?.Latitude ?? 0}";
 
         IList<double> lonLat = PromptForLonLat("Reference point (lon,lat) ",
             current);
@@ -118,13 +116,13 @@ internal sealed class BuildQueryCommand : AsyncCommand
 
         // bbox sw ne and container
         current = $"{_request.Spatial?.BBoxSwCorner?.Longitude ?? 0} " +
-            $"{_request.Spatial?.BBoxSwCorner?.Longitude ?? 0}";
+            $"{_request.Spatial?.BBoxSwCorner?.Latitude ?? 0}";
         lonLat = PromptForLonLat("BBox SW (lon lat)", current);
         _request.Spatial!.BBoxSwCorner = lonLat.Count == 0
             ? null : new SearchRequestPoint(lonLat[0], lonLat[1]);
 
         current = $"{_request.Spatial?.BBoxNeCorner?.Longitude ?? 0} " +
-            $"{_request.Spatial?.BBoxNeCorner?.Longitude ?? 0}";
+            $"{_request.Spatial?.BBoxNeCorner?.Latitude ?? 0}";
         lonLat = PromptForLonLat("BBox NE (lon,lat)", current);
         _request.Spatial!.BBoxNeCorner = lonLat.Count == 0
             ? null : new SearchRequestPoint(lonLat[0], lonLat[1]);
@@ -184,7 +182,7 @@ internal sealed class BuildQueryCommand : AsyncCommand
                 "nmatt",
                 "nmdsc"
             ));
-        _request.Scopes = scopes.Any(s => s == "all") ? null : scopes;
+        _request.Scopes = scopes.Any(s => s == "(all)") ? null : scopes;
 
         if (AnsiConsole.Confirm("Set spatial options?", false))
             GetSpatialOptions();
@@ -196,6 +194,13 @@ internal sealed class BuildQueryCommand : AsyncCommand
         CancellationToken cancellationToken)
     {
         AnsiConsole.MarkupLine("[underline green]BUILD QUERY[/]");
+
+        // this command is interactive
+        if (Console.IsInputRedirected)
+        {
+            AnsiConsole.MarkupLine("[red]This command requires an interactive console[/]");
+            return Task.FromResult(1);
+        }
 
         while (true)
         {
@@ -226,17 +231,21 @@ internal sealed class BuildQueryCommand : AsyncCommand
                         new TextPrompt<string?>("Text?")
                         .DefaultValue(_request.Text));
 
-                    var t = _builder.Build(_request);
-                    SqlResult result = _compiler.Compile(
-                        c == 'c' ? t.Item2 : t.Item1);
+                    PagedSqlQuery query = _builder.Build(_request);
+                    SqlQuery sql = c == 'c' ? query.Count : query.Data;
 
-                    AnsiConsole.MarkupLine($"[cyan]{result}[/]");
+                    AnsiConsole.MarkupLine($"[cyan]{Markup.Escape(sql.Sql)}[/]");
+                    foreach (var p in sql.Parameters)
+                    {
+                        AnsiConsole.MarkupLine(Markup.Escape(
+                            $"  @{p.Key} = {QuickSearchBuilder.FormatValue(p.Value)}"));
+                    }
                 }
             }
             catch (Exception e)
             {
                 Debug.WriteLine(e.ToString());
-                AnsiConsole.MarkupLine($"[red]{e.Message}[/]");
+                AnsiConsole.MarkupLine($"[red]{Markup.Escape(e.Message)}[/]");
             }
         }
 

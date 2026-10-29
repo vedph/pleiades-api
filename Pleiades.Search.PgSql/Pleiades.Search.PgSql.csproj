@@ -9,9 +9,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Embix.Search.PgSql" Version="5.0.0" />
 		<PackageReference Include="Npgsql" Version="10.0.3" />
-		<PackageReference Include="SqlKata" Version="4.0.1" />
-		<PackageReference Include="SqlKata.Execution" Version="4.0.1" />
 	</ItemGroup>
 
 	<ItemGroup>

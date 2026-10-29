@@ -1,16 +1,12 @@
 ﻿using Embix.Core;
-using Embix.Core.Config;
 using Embix.PgSql;
 using Fusi.Tools;
 using Microsoft.Extensions.Configuration;
-using Npgsql;
 using Pleiades.Cli.Services;
 using Pleiades.Ef.PgSql;
 using Pleiades.Index;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using SqlKata.Compilers;
-using SqlKata.Execution;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -43,51 +39,61 @@ internal sealed class BuildIndexCommand : AsyncCommand<BuildIndexCommandSettings
         string cs = string.Format(
             CliAppContext.Configuration.GetConnectionString("Default")!,
             settings.DbName);
+        PgSqlDbConnectionFactory connFactory = new(cs);
 
-        PgSqlPleiadesIndexBuilderFactory factory = new(
-            LoadText(settings.ProfilePath!), cs);
-
-        PgSqlPleiadesTableInitializer initializer = new(
-            new PgSqlDbConnectionFactory(cs));
-
-        PleiadesMetadataSupplier supplier = new(
-            new QueryFactory(new NpgsqlConnection(cs), new PostgresCompiler()));
-
+        // create the index tables if not present, or clear them
+        PgSqlPleiadesTableInitializer initializer = new(connFactory);
         initializer.Initialize(settings.IsClearEnabled);
 
-        foreach (string documentId in factory.Profile.GetDocuments()
-            .Select(d => d.Id!))
+        // the metadata supplier requires the lookup data from the import
+        PleiadesMetadataSupplier supplier = new(connFactory);
+
+        // the factory owns the index writer shared by all its builders:
+        // disposing it flushes and disposes the writer
+        using (PgSqlPleiadesIndexBuilderFactory factory = new(
+            LoadText(settings.ProfilePath!), cs))
         {
-            using IndexBuilder builder = factory.GetBuilder(supplier,
-                CliAppContext.Logger);
-            builder.PartitionCount = settings.PartitionCount;
-            builder.MinPartitionSize = settings.MinPartitionSize;
-            builder.RecordLimit = settings.RecordLimit;
+            // bulk load: building indexes once at the end is much faster
+            // than updating them at each insert
+            initializer.DropIndexes();
 
-            await AnsiConsole.Progress().StartAsync(async ctx =>
+            foreach (string documentId in factory.Profile.GetDocuments()
+                .Select(d => d.Id!))
             {
-                var pt = builder.CalculatePartitionCount(documentId);
-                List<ProgressTask> tasks = new(pt.Item1);
-                for (int i = 0; i < pt.Item1; i++)
-                {
-                    tasks.Add(ctx.AddTask($"partition #{i + 1}"));
-                }
+                using IndexBuilder builder = factory.GetBuilder(supplier,
+                    CliAppContext.Logger);
+                builder.PartitionCount = settings.PartitionCount;
+                builder.MinPartitionSize = settings.MinPartitionSize;
+                builder.RecordLimit = settings.RecordLimit;
 
-                await builder.BuildAsync(documentId, CancellationToken.None,
-                    new Progress<ProgressReport>(report =>
-                    {
-                        // the index builder provides messages with prefix
-                        // [NNN.DocId] where NNN=partition nr.(1-N)
-                        if (report!.Message?.StartsWith("[",
-                            StringComparison.OrdinalIgnoreCase) == true)
+                await AnsiConsole.Progress().StartAsync(async ctx =>
+                {
+                    var pt = builder.CalculatePartitionCount(documentId);
+                    List<ProgressTask> tasks = new(pt.Item1);
+                    for (int i = 0; i < pt.Item1; i++)
+                        tasks.Add(ctx.AddTask($"{documentId} #{i + 1}"));
+
+                    await builder.BuildAsync(documentId, cancellationToken,
+                        new Progress<ProgressReport>(report =>
                         {
-                            int p = int.Parse(report.Message.AsSpan(1, 3),
-                                CultureInfo.InvariantCulture);
-                            tasks[p - 1].Value = report.Percent;
-                        }
-                    }));
+                            // the index builder provides messages with prefix
+                            // [NNN.DocId] where NNN=partition nr.(1-N)
+                            if (report.Message?.StartsWith('[') == true
+                                && int.TryParse(report.Message.AsSpan(1, 3),
+                                    NumberStyles.Integer,
+                                    CultureInfo.InvariantCulture, out int p)
+                                && p > 0 && p <= tasks.Count)
+                            {
+                                tasks[p - 1].Value = report.Percent;
+                            }
+                        }));
                 });
+            }
         }
+
+        AnsiConsole.Status().Start("Creating indexes...",
+            _ => initializer.CreateIndexes());
+        AnsiConsole.MarkupLine("[green]Index completed.[/]");
         return 0;
     }
 }

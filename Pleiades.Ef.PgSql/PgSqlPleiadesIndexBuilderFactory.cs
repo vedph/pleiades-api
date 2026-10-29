@@ -1,15 +1,17 @@
-﻿using Embix.Core.Config;
+﻿using Embix.Core;
+using Embix.Core.Config;
 using Embix.PgSql;
 using Embix.Plugin.Greek;
 using Pleiades.Index;
-using SqlKata.Compilers;
 
 namespace Pleiades.Ef.PgSql;
 
 /// <summary>
-/// PostgreSql index builder factory for Pleiades.
+/// PostgreSql index builder factory for Pleiades. Its builders write via
+/// <see cref="PgSqlIndexWriter"/> (bulk <c>COPY</c>), and include the
+/// Pleiades and Greek filters.
 /// </summary>
-/// <seealso cref="IndexBuilderFactoryBase" />
+/// <seealso cref="IndexBuilderFactory" />
 public sealed class PgSqlPleiadesIndexBuilderFactory : IndexBuilderFactory
 {
     /// <summary>
@@ -21,9 +23,16 @@ public sealed class PgSqlPleiadesIndexBuilderFactory : IndexBuilderFactory
     public PgSqlPleiadesIndexBuilderFactory(string profile, string connString)
         : base(profile,
                 new PgSqlDbConnectionFactory(connString),
-                new PostgresCompiler(),
                 typeof(LanguageTextFilter).Assembly,
                 typeof(GrcRomanizerTextFilter).Assembly)
     {
     }
+
+    /// <summary>
+    /// Creates the index writer.
+    /// </summary>
+    /// <param name="profile">The profile.</param>
+    /// <returns>Writer.</returns>
+    protected override IIndexWriter CreateIndexWriter(EmbixProfile profile) =>
+        new PgSqlIndexWriter(profile, ConnectionFactory);
 }

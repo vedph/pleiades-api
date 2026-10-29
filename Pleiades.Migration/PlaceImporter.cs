@@ -20,7 +20,8 @@ public sealed class PlaceImporter
     private readonly JsonPlaceReader _reader;
     private readonly EfPleiadesWriter _writer;
     private readonly List<PendingLink> _pendingLinks;
-    private readonly HashSet<string> _pendingLinkNames;
+    // URI => ID of all the imported places
+    private readonly Dictionary<string, string> _placeIds;
     private readonly EfPlaceAdapter _adapter;
 
     /// <summary>
@@ -66,36 +67,33 @@ public sealed class PlaceImporter
         _writer = writer ?? throw new ArgumentNullException(nameof(writer));
         _adapter = adapter ?? throw new ArgumentNullException(nameof(adapter));
 
-        // all the place-to-place connections or links whose target
-        // has not already been stored in the DB are cached as pending,
-        // and processed later.
-        _pendingLinks = new List<PendingLink>();
-        _pendingLinkNames = new HashSet<string>();
+        // all the place-to-place connections or links are cached as
+        // pending, and resolved once all the places have been read,
+        // as their target can precede or follow their source
+        _pendingLinks = [];
+        _placeIds = new Dictionary<string, string>(StringComparer.Ordinal);
 
         ImportFlags = PlaceChildFlags.All;
     }
 
     #region Pending
+    private static string NormalizeUri(string uri) => uri.TrimEnd('/');
+
     private void ClearPending()
     {
         _pendingLinks.Clear();
-        _pendingLinkNames.Clear();
+        _placeIds.Clear();
     }
 
-    private void AddPending(PendingLink link)
+    private void ResolvePending()
     {
-        _pendingLinks.Add(link);
-        _pendingLinkNames.Add(link.OriginalId);
-    }
-
-    private void ResolvePendingFrom(Place place)
-    {
-        if (!_pendingLinkNames.Contains(place.Uri!)) return;
-
-        foreach (var pending in _pendingLinks
-            .Where(p => p.OriginalId == place.Uri))
+        foreach (PendingLink pending in _pendingLinks)
         {
-            pending.ResolvedId = place.Id!;
+            if (_placeIds.TryGetValue(NormalizeUri(pending.OriginalId),
+                out string? id))
+            {
+                pending.ResolvedId = id;
+            }
         }
     }
     #endregion
@@ -142,8 +140,8 @@ public sealed class PlaceImporter
             }
 
             var t = _adapter.GetPlace(place, ImportFlags);
-            foreach (var link in t.Item2) AddPending(link);
-            ResolvePendingFrom(place);
+            _pendingLinks.AddRange(t.Item2);
+            if (place.Uri != null) _placeIds[NormalizeUri(place.Uri)] = place.Id!;
 
             if (!IsDry) _writer.WritePlace(t.Item1);
 
@@ -163,6 +161,7 @@ public sealed class PlaceImporter
                 ShortName = l.ShortName,
                 Group = l.Group
             }).ToList());
+            ResolvePending();
             _writer.ResolvePending(_pendingLinks);
         }
 

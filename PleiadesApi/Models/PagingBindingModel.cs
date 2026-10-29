@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace PleiadesApi.Models;
 
@@ -9,14 +8,14 @@ namespace PleiadesApi.Models;
 public class PagingBindingModel
 {
     /// <summary>
-    /// The page number.
+    /// The page number (1-N). Default is 1.
     /// </summary>
     [Range(1, int.MaxValue)]
-    public int PageNumber { get; set; }
+    public int PageNumber { get; set; } = 1;
 
     /// <summary>
-    /// The size of the page.
+    /// The size of the page (max 100). Default is 20.
     /// </summary>
     [Range(0, 100)]
-    public int PageSize { get; set; }
+    public int PageSize { get; set; } = 20;
 }
