@@ -18,7 +18,7 @@ namespace Pleiades.Cli.Commands;
 internal sealed class BulkExportCommand : AsyncCommand<BulkExportCommandSettings>
 {
     public override Task<int> ExecuteAsync(CommandContext context,
-        BulkExportCommandSettings settings)
+        BulkExportCommandSettings settings, CancellationToken cancellationToken)
     {
         AnsiConsole.MarkupLine("[green underline]BULK DATA EXPORT[/]");
         AnsiConsole.MarkupLine($"Database: [cyan]{settings.DbName}[/]");

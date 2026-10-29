@@ -8,6 +8,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Pleiades.Cli.Commands;
@@ -24,7 +25,7 @@ internal sealed class PopulateSpatialCommand :
     }
 
     public override Task<int> ExecuteAsync(CommandContext context,
-        PopulateSpatialCommandSettings settings)
+        PopulateSpatialCommandSettings settings, CancellationToken cancellationToken)
     {
         AnsiConsole.MarkupLine("[underline red]POPULATE SPATIAL[/]");
         AnsiConsole.MarkupLine($"Database: [cyan]{settings.DbName}[/]");

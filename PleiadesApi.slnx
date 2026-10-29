@@ -1,0 +1,22 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="build-cli.ps1" />
+    <File Path="CHANGELOG.md" />
+    <File Path="docker-compose.yml" />
+    <File Path="Dockerfile" />
+    <File Path="README.md" />
+    <File Path="Schema.png" />
+  </Folder>
+  <Project Path="Pleiades.Core/Pleiades.Core.csproj" />
+  <Project Path="Pleiades.Ef.PgSql/Pleiades.Ef.PgSql.csproj" />
+  <Project Path="Pleiades.Ef/Pleiades.Ef.csproj" />
+  <Project Path="Pleiades.Geo/Pleiades.Geo.csproj" />
+  <Project Path="Pleiades.Index.Test/Pleiades.Index.Test.csproj" />
+  <Project Path="Pleiades.Index/Pleiades.Index.csproj" />
+  <Project Path="Pleiades.Migration/Pleiades.Migration.csproj" />
+  <Project Path="Pleiades.Search.PgSql/Pleiades.Search.PgSql.csproj" />
+  <Project Path="Pleiades.Search.Test/Pleiades.Search.Test.csproj" />
+  <Project Path="Pleiades.Search/Pleiades.Search.csproj" />
+  <Project Path="PleiadesApi/PleiadesApi.csproj" />
+  <Project Path="pleitool/pleitool.csproj" />
+</Solution>

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net9.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<Version>2.0.0</Version>
 		<FileVersion>2.0.0</FileVersion>
@@ -24,7 +24,7 @@
 	<ItemGroup>
 		<PackageReference Include="Embix.PgSql" Version="4.0.1" />
 		<PackageReference Include="Embix.Plugin.Greek" Version="4.0.1" />
-		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.3" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
 		<PackageReference Include="SqlKata" Version="4.0.1" />
 		<PackageReference Include="SqlKata.Execution" Version="4.0.1" />
 	</ItemGroup>

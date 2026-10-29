@@ -66,7 +66,7 @@ internal sealed class ImportGraphCommand : AsyncCommand<ImportGraphCommandSettin
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context,
-        ImportGraphCommandSettings settings)
+        ImportGraphCommandSettings settings, CancellationToken cancellationToken)
     {
         AnsiConsole.MarkupLine("[red]IMPORT JSON DATASET[/]");
         AnsiConsole.MarkupLine($"Input file: [cyan]{settings.InputPath}[/]");

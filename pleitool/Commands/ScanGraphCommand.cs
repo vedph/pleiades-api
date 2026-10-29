@@ -7,6 +7,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Pleiades.Cli.Commands;
@@ -40,7 +41,7 @@ internal sealed class ScanGraphCommand : AsyncCommand<ScanGraphCommandSettings>
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context,
-        ScanGraphCommandSettings settings)
+        ScanGraphCommandSettings settings, CancellationToken cancellationToken)
     {
         AnsiConsole.Markup("[underline green]SCAN GRAPH FROM JSON FILE[/]");
         AnsiConsole.Markup($"Input JSON file: [cyan]{settings.InputPath}[/]");

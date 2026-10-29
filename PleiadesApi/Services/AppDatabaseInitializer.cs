@@ -22,7 +22,6 @@ namespace PleiadesApi.Services;
 /// Initializes a new instance of the <see cref="AppDatabaseInitializer"/>
 /// class.
 /// </remarks>
-/// <param name="serviceProvider">The service provider.</param>
 public sealed class AppDatabaseInitializer :
     AuthDatabaseInitializer<NamedUser, IdentityRole, NamedSeededUserOptions>
 {

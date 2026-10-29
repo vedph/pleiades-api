@@ -33,7 +33,7 @@ internal sealed class BuildIndexCommand : AsyncCommand<BuildIndexCommandSettings
     }
 
     public async override Task<int> ExecuteAsync(CommandContext context,
-        BuildIndexCommandSettings settings)
+        BuildIndexCommandSettings settings, CancellationToken cancellationToken)
     {
         AnsiConsole.MarkupLine("[red underline]BUILD INDEX[/]");
         AnsiConsole.MarkupLine($"Profile path: [cyan]{settings.ProfilePath}[/]");

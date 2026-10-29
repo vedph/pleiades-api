@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Product>Pleiades wrapper API</Product>
     <Authors>Daniele Fusi</Authors>
     <Company>Fusi</Company>
@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Fusi.Tools" Version="6.0.0" />
+    <PackageReference Include="Fusi.Tools" Version="9.0.2" />
   </ItemGroup>
 
   <ItemGroup>

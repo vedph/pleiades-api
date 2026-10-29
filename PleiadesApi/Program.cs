@@ -70,6 +70,7 @@ public static class Program
     /// Configures the options services providing typed configuration objects.
     /// </summary>
     /// <param name="services">The services.</param>
+    /// <param name="config">The configuration.</param>
     private static void ConfigureOptionsServices(IServiceCollection services,
         IConfiguration config)
     {
@@ -577,7 +578,7 @@ public static class Program
             app.MapScalarApiReference(options =>
             {
                 options.WithTitle("Pleiades API")
-                       .WithPreferredScheme("Bearer");
+                       .AddPreferredSecuritySchemes("Bearer");
             });
 
             Log.Information("Running API");

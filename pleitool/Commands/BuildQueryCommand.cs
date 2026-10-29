@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Pleiades.Cli.Commands;
@@ -191,7 +192,8 @@ internal sealed class BuildQueryCommand : AsyncCommand
         AnsiConsole.Write(new Panel(_request.ToString()));
     }
 
-    public override Task<int> ExecuteAsync(CommandContext context)
+    public override Task<int> ExecuteAsync(CommandContext context,
+        CancellationToken cancellationToken)
     {
         AnsiConsole.MarkupLine("[underline green]BUILD QUERY[/]");
 

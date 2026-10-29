@@ -7,6 +7,7 @@ using Spectre.Console;
 using Spectre.Console.Cli;
 using System;
 using System.ComponentModel;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Pleiades.Cli.Commands;
@@ -14,7 +15,7 @@ namespace Pleiades.Cli.Commands;
 internal sealed class CreateDbCommand : AsyncCommand<CreateDbCommandSettings>
 {
     public override Task<int> ExecuteAsync(CommandContext context,
-        CreateDbCommandSettings settings)
+        CreateDbCommandSettings settings, CancellationToken cancellationToken)
     {
         AnsiConsole.MarkupLine("[red underline]CREATE DATABASE[/]");
         AnsiConsole.MarkupLine($"Database: [cyan]{settings.DbName}[/]");

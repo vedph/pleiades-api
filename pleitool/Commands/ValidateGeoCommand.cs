@@ -14,7 +14,7 @@ namespace Pleiades.Cli.Commands;
 internal sealed class ValidateGeoCommand : AsyncCommand<ValidateGeoCommandSettings>
 {
     public override Task<int> ExecuteAsync(CommandContext context,
-        ValidateGeoCommandSettings settings)
+        ValidateGeoCommandSettings settings, CancellationToken cancellationToken)
     {
         AnsiConsole.MarkupLine("[underline green]VALIDATE GEO[/]");
 
