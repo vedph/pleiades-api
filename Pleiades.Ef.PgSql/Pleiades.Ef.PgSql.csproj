@@ -3,9 +3,16 @@
 	<PropertyGroup>
 		<TargetFramework>net10.0</TargetFramework>
 		<Nullable>enable</Nullable>
-		<Version>2.0.0</Version>
-		<FileVersion>2.0.0</FileVersion>
-		<AssemblyVersion>2.0.0</AssemblyVersion>
+		<Version>3.0.0</Version>
+		<FileVersion>3.0.0</FileVersion>
+		<AssemblyVersion>3.0.0</AssemblyVersion>
+		<DebugType>portable</DebugType>
+		<DebugSymbols>true</DebugSymbols>
+		<!-- SourceLink-related -->
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+		<Deterministic>true</Deterministic>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -26,6 +33,7 @@
 	<ItemGroup>
 		<PackageReference Include="Embix.PgSql" Version="5.0.0" />
 		<PackageReference Include="Embix.Plugin.Greek" Version="5.0.0" />
+		<PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" Version="10.0.402" />
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
 	</ItemGroup>
 

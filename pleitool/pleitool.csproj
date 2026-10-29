@@ -12,9 +12,9 @@
     <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
     <Description>Pleiades wrapper API CLI tool</Description>
 	<Nullable>enable</Nullable>
-	<Version>2.0.0</Version>
-	<FileVersion>2.0.0</FileVersion>
-	<AssemblyVersion>2.0.0</AssemblyVersion>
+	<Version>3.0.0</Version>
+	<FileVersion>3.0.0</FileVersion>
+	<AssemblyVersion>3.0.0</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>

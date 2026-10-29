@@ -1,5 +1,7 @@
 # History
 
+## 3.0.0
+
 - 2026-10-29:
   - API: string values missing in the data (often empty strings in the source) are returned as `null`; the place bounding box property is `bbox`.
   - index: the rank is reduced for entities whose review state is not `published` (rather than only `pending`, which is no longer used by Pleiades).
