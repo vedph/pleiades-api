@@ -29,9 +29,7 @@ $projectOrder = @(
   "Pleiades.Geo\Pleiades.Geo.csproj",
   "Pleiades.Migration\Pleiades.Migration.csproj",
   "Pleiades.Search\Pleiades.Search.csproj",
-  "Pleiades.Search.PgSql\Pleiades.Search.PgSql.csproj",
-  "PleiadesApi\PleiadesApi.csproj",
-  "pleitool\pleitool.csproj"
+  "Pleiades.Search.PgSql\Pleiades.Search.PgSql.csproj"
 )
 #endregion
 
