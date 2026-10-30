@@ -9,17 +9,20 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Embix.Core" Version="5.0.0" />
-		<PackageReference Include="Embix.Search.PgSql" Version="5.0.0" />
-		<PackageReference Include="xunit.v3" Version="4.0.2" />
-		<PackageReference Include="coverlet.collector" Version="10.1.0">
+		<PackageReference Include="Embix.Core" />
+		<PackageReference Include="Embix.Search.PgSql" />
+		<PackageReference Include="xunit.v3" />
+		<PackageReference Include="coverlet.collector">
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
 	</ItemGroup>
 
-	<ItemGroup>
+	<ItemGroup Condition="'$(Configuration)'=='Debug'">
 		<ProjectReference Include="..\Pleiades.Search\Pleiades.Search.csproj" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(Configuration)'=='Release'">
+		<PackageReference Include="Pleiades.Search" />
 	</ItemGroup>
 
 </Project>

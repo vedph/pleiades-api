@@ -32,14 +32,17 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="EFCore.NamingConventions" Version="10.0.1" />
-		<PackageReference Include="Embix.Core" Version="5.0.0" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.14" />
-		<PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" Version="10.0.403" />
+		<PackageReference Include="EFCore.NamingConventions" />
+		<PackageReference Include="Embix.Core" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" />
+		<PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
 	</ItemGroup>
 
-	<ItemGroup>
+	<ItemGroup Condition="'$(Configuration)'=='Debug'">
 		<ProjectReference Include="..\Pleiades.Core\Pleiades.Core.csproj" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(Configuration)'=='Release'">
+		<PackageReference Include="Pleiades.Core" />
 	</ItemGroup>
 
 </Project>

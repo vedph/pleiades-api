@@ -1,69 +1,78 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Pleiades.Cli</RootNamespace>
-    <NeutralLanguage>en-US</NeutralLanguage>
-    <Company>Fusi</Company>
-    <Product></Product>
-    <Authors>Daniele Fusi</Authors>
-    <Copyright>by Daniele Fusi</Copyright>
-    <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
-    <Description>Pleiades wrapper API CLI tool</Description>
-	<Nullable>enable</Nullable>
-	<Version>3.0.1</Version>
-	<FileVersion>3.0.1</FileVersion>
-	<AssemblyVersion>3.0.1</AssemblyVersion>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net10.0</TargetFramework>
+		<RootNamespace>Pleiades.Cli</RootNamespace>
+		<NeutralLanguage>en-US</NeutralLanguage>
+		<Company>Fusi</Company>
+		<Product></Product>
+		<Authors>Daniele Fusi</Authors>
+		<Copyright>by Daniele Fusi</Copyright>
+		<PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
+		<Description>Pleiades wrapper API CLI tool</Description>
+		<Nullable>enable</Nullable>
+		<Version>3.0.1</Version>
+		<FileVersion>3.0.1</FileVersion>
+		<AssemblyVersion>3.0.1</AssemblyVersion>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="appsettings.json" />
-    <None Remove="Assets\Profile.json" />
-    <None Remove="Assets\Spatial.pgsql" />
-  </ItemGroup>
+	<ItemGroup>
+		<None Remove="appsettings.json" />
+		<None Remove="Assets\Profile.json" />
+		<None Remove="Assets\Spatial.pgsql" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Content Include="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Assets\Profile.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
+	<ItemGroup>
+		<Content Include="appsettings.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Assets\Profile.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Include="Assets\Spatial.pgsql" />
-  </ItemGroup>
+	<ItemGroup>
+		<EmbeddedResource Include="Assets\Spatial.pgsql" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Pleiades.Core\Pleiades.Core.csproj" />
-    <ProjectReference Include="..\Pleiades.Ef.PgSql\Pleiades.Ef.PgSql.csproj" />
-    <ProjectReference Include="..\Pleiades.Ef\Pleiades.Ef.csproj" />
-    <ProjectReference Include="..\Pleiades.Geo\Pleiades.Geo.csproj" />
-    <ProjectReference Include="..\Pleiades.Index\Pleiades.Index.csproj" />
-    <ProjectReference Include="..\Pleiades.Migration\Pleiades.Migration.csproj" />
-    <ProjectReference Include="..\Pleiades.Search.PgSql\Pleiades.Search.PgSql.csproj" />
-  </ItemGroup>
+	<ItemGroup Condition="'$(Configuration)'=='Debug'">
+		<ProjectReference Include="..\Pleiades.Core\Pleiades.Core.csproj" />
+		<ProjectReference Include="..\Pleiades.Ef.PgSql\Pleiades.Ef.PgSql.csproj" />
+		<ProjectReference Include="..\Pleiades.Ef\Pleiades.Ef.csproj" />
+		<ProjectReference Include="..\Pleiades.Geo\Pleiades.Geo.csproj" />
+		<ProjectReference Include="..\Pleiades.Index\Pleiades.Index.csproj" />
+		<ProjectReference Include="..\Pleiades.Migration\Pleiades.Migration.csproj" />
+		<ProjectReference Include="..\Pleiades.Search.PgSql\Pleiades.Search.PgSql.csproj" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(Configuration)'=='Release'">
+		<PackageReference Include="Pleiades.Core" />
+		<PackageReference Include="Pleiades.Ef.PgSql" />
+		<PackageReference Include="Pleiades.Ef" />
+		<PackageReference Include="Pleiades.Geo" />
+		<PackageReference Include="Pleiades.Index" />
+		<PackageReference Include="Pleiades.Migration" />
+		<PackageReference Include="Pleiades.Search.PgSql" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Embix.PgSql" Version="5.0.0" />
-    <PackageReference Include="Embix.Plugin.Greek" Version="5.0.0" />
-    <PackageReference Include="Fusi.DbManager" Version="6.0.4" />
-    <PackageReference Include="Fusi.DbManager.PgSql" Version="6.0.4" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.14">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.14" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.14" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.14" />
-    <PackageReference Include="Npgsql" Version="10.0.3" />
-    <PackageReference Include="Serilog" Version="4.4.0" />
-    <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" />
-    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
-    <PackageReference Include="Spectre.Console" Version="0.57.2" />
-    <PackageReference Include="Spectre.Console.Cli" Version="0.57.2" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Embix.PgSql" />
+		<PackageReference Include="Embix.Plugin.Greek" />
+		<PackageReference Include="Fusi.DbManager" />
+		<PackageReference Include="Fusi.DbManager.PgSql" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.Extensions.Configuration" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
+		<PackageReference Include="Npgsql" />
+		<PackageReference Include="Serilog" />
+		<PackageReference Include="Serilog.Extensions.Logging" />
+		<PackageReference Include="Serilog.Sinks.File" />
+		<PackageReference Include="Spectre.Console" />
+		<PackageReference Include="Spectre.Console.Cli" />
+	</ItemGroup>
 
 </Project>

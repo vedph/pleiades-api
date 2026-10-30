@@ -22,11 +22,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Fusi.Tools" Version="9.0.2" />
-		<PackageReference Include="GeoJSON" Version="2.3.1" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.14" />
-		<PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" Version="10.0.403" />
-		<PackageReference Include="Npgsql" Version="10.0.3" />
+		<PackageReference Include="Fusi.Tools" />
+		<PackageReference Include="GeoJSON" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+		<PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+		<PackageReference Include="Npgsql" />
 	</ItemGroup>
 
 </Project>

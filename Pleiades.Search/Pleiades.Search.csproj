@@ -16,14 +16,17 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Embix.Core" Version="5.0.0" />
-		<PackageReference Include="Embix.Search" Version="5.0.0" />
-		<PackageReference Include="Fusi.Tools" Version="9.0.2" />
-		<PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" Version="10.0.403" />
+		<PackageReference Include="Embix.Core" />
+		<PackageReference Include="Embix.Search" />
+		<PackageReference Include="Fusi.Tools" />
+		<PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
 	</ItemGroup>
 
-	<ItemGroup>
+	<ItemGroup Condition="'$(Configuration)'=='Debug'">
 		<ProjectReference Include="..\Pleiades.Core\Pleiades.Core.csproj" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(Configuration)'=='Release'">
+		<PackageReference Include="Pleiades.Core" />
 	</ItemGroup>
 
 </Project>

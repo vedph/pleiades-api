@@ -16,13 +16,16 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Embix.Search.PgSql" Version="5.0.0" />
-		<PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" Version="10.0.403" />
-		<PackageReference Include="Npgsql" Version="10.0.3" />
+		<PackageReference Include="Embix.Search.PgSql" />
+		<PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+		<PackageReference Include="Npgsql" />
 	</ItemGroup>
 
-	<ItemGroup>
+	<ItemGroup Condition="'$(Configuration)'=='Debug'">
 		<ProjectReference Include="..\Pleiades.Search\Pleiades.Search.csproj" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(Configuration)'=='Release'">
+		<PackageReference Include="Pleiades.Search" />
 	</ItemGroup>
 
 </Project>

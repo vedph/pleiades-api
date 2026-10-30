@@ -1,0 +1,58 @@
+<Project>
+	<PropertyGroup>
+		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageVersion Include="Pleiades.Core" Version="3.0.1" />
+		<PackageVersion Include="Pleiades.Ef" Version="3.0.1" />
+		<PackageVersion Include="Pleiades.Ef.PgSql" Version="3.0.1" />
+		<PackageVersion Include="Pleiades.Geo" Version="3.0.1" />
+		<PackageVersion Include="Pleiades.Index" Version="3.0.1" />
+		<PackageVersion Include="Pleiades.Migration" Version="3.0.1" />
+		<PackageVersion Include="Pleiades.Search" Version="3.0.1" />
+		<PackageVersion Include="Pleiades.Search.PgSql" Version="3.0.1" />
+
+		<!-- External dependencies for all packages -->
+		<PackageVersion Include="coverlet.collector" Version="10.1.0" />
+		<PackageVersion Include="EFCore.NamingConventions" Version="10.0.1" />
+		<PackageVersion Include="Embix.Core" Version="5.0.0" />
+		<PackageVersion Include="Embix.PgSql" Version="5.0.0" />
+		<PackageVersion Include="Embix.Plugin.Greek" Version="5.0.0" />
+		<PackageVersion Include="Embix.Search" Version="5.0.0" />
+		<PackageVersion Include="Embix.Search.PgSql" Version="5.0.0" />
+		<PackageVersion Include="Fusi.Api.Auth.Controllers" Version="7.1.0" />
+		<PackageVersion Include="Fusi.DbManager" Version="6.0.4" />
+		<PackageVersion Include="Fusi.DbManager.PgSql" Version="6.0.4" />
+		<PackageVersion Include="Fusi.Text" Version="7.0.6" />
+		<PackageVersion Include="Fusi.Tools" Version="9.0.2" />
+		<PackageVersion Include="GeoJSON" Version="2.3.1" />
+		<PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />
+		<PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.14" />
+		<PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.14" />
+		<PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.14" />
+		<PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.14" />
+		<PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.14" />
+		<PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.14" />
+		<PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.14" />
+		<PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.14" />
+		<PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.14" />
+		<PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.14" />
+		<PackageVersion Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" Version="10.0.403" />
+		<PackageVersion Include="Npgsql" Version="10.0.3" />
+		<PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+		<PackageVersion Include="Polly" Version="8.9.0" />
+		<PackageVersion Include="Scalar.AspNetCore" Version="2.18.6" />
+		<PackageVersion Include="Serilog" Version="4.4.0" />
+		<PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
+		<PackageVersion Include="Serilog.Exceptions" Version="8.4.0" />
+		<PackageVersion Include="Serilog.Extensions.Hosting" Version="10.0.0" />
+		<PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
+		<PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
+		<PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
+		<PackageVersion Include="Serilog.Sinks.MongoDB" Version="8.0.0" />
+		<PackageVersion Include="Serilog.Sinks.Postgresql.Alternative" Version="4.3.0" />
+		<PackageVersion Include="Spectre.Console" Version="0.57.2" />
+		<PackageVersion Include="Spectre.Console.Cli" Version="0.57.2" />
+		<PackageVersion Include="xunit.v3" Version="4.0.2" />
+	</ItemGroup>
+</Project>

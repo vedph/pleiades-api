@@ -1,10 +1,15 @@
 <Solution>
   <Folder Name="/Solution Items/">
     <File Path="build-cli.ps1" />
+    <File Path="buildnpub.ps1" />
     <File Path="CHANGELOG.md" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
     <File Path="docker-compose.yml" />
     <File Path="Dockerfile" />
+    <File Path="get-build-order.ps1" />
     <File Path="global.json" />
+    <File Path="nuget.config" />
     <File Path="README.md" />
     <File Path="Schema.png" />
   </Folder>

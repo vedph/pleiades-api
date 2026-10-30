@@ -25,16 +25,20 @@
 		<EmbeddedResource Include="Assets\Indexes.pgsql" />
 	</ItemGroup>
 
-	<ItemGroup>
+	<ItemGroup Condition="'$(Configuration)'=='Debug'">
 		<ProjectReference Include="..\Pleiades.Ef\Pleiades.Ef.csproj" />
 		<ProjectReference Include="..\Pleiades.Index\Pleiades.Index.csproj" />
 	</ItemGroup>
+	<ItemGroup Condition="'$(Configuration)'=='Release'">
+		<PackageReference Include="Pleiades.Ef" />
+		<PackageReference Include="Pleiades.Index" />
+	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Embix.PgSql" Version="5.0.0" />
-		<PackageReference Include="Embix.Plugin.Greek" Version="5.0.0" />
-		<PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" Version="10.0.403" />
-		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+		<PackageReference Include="Embix.PgSql" />
+		<PackageReference Include="Embix.Plugin.Greek" />
+		<PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
 	</ItemGroup>
 
 </Project>
