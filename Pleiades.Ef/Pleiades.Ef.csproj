@@ -9,9 +9,9 @@
 		<NeutralLanguage>en-US</NeutralLanguage>
 		<Copyright>by Daniele Fusi</Copyright>
 		<Nullable>enable</Nullable>
-		<Version>3.0.0</Version>
-		<FileVersion>3.0.0</FileVersion>
-		<AssemblyVersion>3.0.0</AssemblyVersion>
+		<Version>3.0.1</Version>
+		<FileVersion>3.0.1</FileVersion>
+		<AssemblyVersion>3.0.1</AssemblyVersion>
 		<DebugType>portable</DebugType>
 		<DebugSymbols>true</DebugSymbols>
 		<!-- SourceLink-related -->
