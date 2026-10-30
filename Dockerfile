@@ -14,6 +14,9 @@ WORKDIR /src
 # Copy project files and source
 COPY . .
 
+# Drop the Windows-only local NuGet source from nuget.config (not available in the container)
+RUN dotnet nuget remove source local --configfile nuget.config
+
 # Use bash to map amd64 -> x64 and build for the target RID cleanly
 RUN /bin/bash -c '\
     RID_ARCH="${TARGETARCH/amd64/x64}" && \

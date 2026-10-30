@@ -7,7 +7,7 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=postgres
     ports:
-      - 5432:5432
+      - 127.0.0.1:5432:5432
     networks:
       - pleiades-network
     volumes:
@@ -18,9 +18,10 @@ services:
 
   pleiades-api:
     image: vedph2020/pleiades-api:3.0.1
+    container_name: pleiades-api
     ports:
         # https://stackoverflow.com/questions/48669548/why-does-aspnet-core-start-on-port-80-from-within-docker
-        - 29139:8080
+        - 127.0.0.1:29139:8080
     depends_on:
         - pleiades-pgsql
     environment:

@@ -1243,5 +1243,5 @@ docker buildx inspect --bootstrap
 This command builds for multiple platforms and pushes directly to Docker Hub:
 
 ```sh
-docker buildx build --platform linux/amd64,linux/arm64 -t vedph2020/pleiades-api:2.0.0 -t vedph2020/pleiades-api:latest --push .
+docker buildx build --platform linux/amd64,linux/arm64 -t vedph2020/pleiades-api:3.0.1 -t vedph2020/pleiades-api:latest --push .
 ```
