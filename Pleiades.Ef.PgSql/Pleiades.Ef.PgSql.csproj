@@ -33,7 +33,7 @@
 	<ItemGroup>
 		<PackageReference Include="Embix.PgSql" Version="5.0.0" />
 		<PackageReference Include="Embix.Plugin.Greek" Version="5.0.0" />
-		<PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" Version="10.0.402" />
+		<PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" Version="10.0.403" />
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
 	</ItemGroup>
 

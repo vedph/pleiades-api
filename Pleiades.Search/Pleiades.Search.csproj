@@ -19,7 +19,7 @@
 		<PackageReference Include="Embix.Core" Version="5.0.0" />
 		<PackageReference Include="Embix.Search" Version="5.0.0" />
 		<PackageReference Include="Fusi.Tools" Version="9.0.2" />
-		<PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" Version="10.0.402" />
+		<PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" Version="10.0.403" />
 	</ItemGroup>
 
 	<ItemGroup>

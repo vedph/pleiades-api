@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Pleiades.Search;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace PleiadesApi.Models;
@@ -35,7 +36,9 @@ public class SpatialBindingModel : PagingBindingModel, IValidatableObject
     public double? DistanceLat { get; set; }
 
     /// <summary>
-    /// The longitude of the bounding box SW corner.
+    /// The longitude of the bounding box SW corner. When the box crosses
+    /// the antimeridian, this is greater than the NE corner's longitude
+    /// (e.g. 170 for a box from 170 to -170).
     /// </summary>
     [Range(-180, 180)]
     public double? SwCornerLon { get; set; }
@@ -63,6 +66,29 @@ public class SpatialBindingModel : PagingBindingModel, IValidatableObject
     /// rather than just intersect it (which is the default behavior).
     /// </summary>
     public bool ContainedInBox { get; set; }
+
+    /// <summary>
+    /// The polygonal region, as a list of <c>lon,lat</c> vertices separated
+    /// by semicolons (at least 3, at most 200; the ring is closed
+    /// automatically). Longitudes can be in the range -540 to 540, so that
+    /// a polygon crossing the antimeridian can have continuous coordinates
+    /// (e.g. 170 to 190); its longitude span must be less than 360.
+    /// </summary>
+    [MaxLength(8000)]
+    public string? Region { get; set; }
+
+    /// <summary>
+    /// True if the region must fully contain the place's bounding box,
+    /// rather than just intersect it (which is the default behavior).
+    /// </summary>
+    public bool ContainedInRegion { get; set; }
+
+    /// <summary>
+    /// Gets the region vertices parsed from <see cref="Region"/>, or null
+    /// if not set or invalid.
+    /// </summary>
+    public IList<SearchRequestPoint>? GetRegion() =>
+        SpatialRegion.Parse(Region, out _);
 
     /// <summary>
     /// Gets a value indicating whether the distance point is set.
@@ -114,12 +140,21 @@ public class SpatialBindingModel : PagingBindingModel, IValidatableObject
                  nameof(NeCornerLon), nameof(NeCornerLat)]);
         }
 
-        if (HasBBox && (SwCornerLon > NeCornerLon || SwCornerLat > NeCornerLat))
+        // longitudes are not compared, as a box crossing the antimeridian
+        // has its W edge east of its E edge
+        if (HasBBox && SwCornerLat > NeCornerLat)
         {
             yield return new ValidationResult(
-                "The SW corner of the bounding box must be at the south-west " +
+                "The SW corner of the bounding box must be at the south " +
                 "of its NE corner",
-                [nameof(SwCornerLon), nameof(SwCornerLat)]);
+                [nameof(SwCornerLat), nameof(NeCornerLat)]);
+        }
+
+        if (!string.IsNullOrWhiteSpace(Region))
+        {
+            SpatialRegion.Parse(Region, out string? error);
+            if (error != null)
+                yield return new ValidationResult(error, [nameof(Region)]);
         }
     }
 }

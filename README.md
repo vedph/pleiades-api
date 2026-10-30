@@ -452,16 +452,18 @@ Searches places by any combination of text, place type, rank, years, distance fr
 | `distanceLat`    | number  |         | the latitude of the distance point (-90 to 90). |
 | `distanceMin`    | integer | 0       | the minimum distance in meters from the distance point (0=not set). |
 | `distanceMax`    | integer | 0       | the maximum distance in meters from the distance point (0=not set). |
-| `swCornerLon`    | number  |         | the longitude of the bounding box SW corner. |
+| `swCornerLon`    | number  |         | the longitude of the bounding box SW corner. It is greater than `neCornerLon` when the box crosses the antimeridian. |
 | `swCornerLat`    | number  |         | the latitude of the bounding box SW corner. |
 | `neCornerLon`    | number  |         | the longitude of the bounding box NE corner. |
 | `neCornerLat`    | number  |         | the latitude of the bounding box NE corner. |
 | `containedInBox` | boolean | `false` | true if the place must be fully contained in the bounding box, false if it must just intersect it. |
+| `region`         | string  |         | a polygonal region, as `lon,lat` vertices separated by semicolons (3-200 vertices; the ring is closed automatically), e.g. `23,37.5;24.2,37.5;23.6,38.5`. See [spatial filters](#spatial-filters). |
+| `containedInRegion` | boolean | `false` | true if the place must be fully contained in the region, false if it must just intersect it. |
 | `sort`           | string  | `title` | the sort order: `title` (title, then ID), or `distance` (nearest first, requires the distance point). |
 | `pageNumber`     | integer | 1       | the page number. |
 | `pageSize`       | integer | 20      | the page size (1-100). |
 
-The request is validated as a whole, and these are 400 errors: only one of `distanceLon` and `distanceLat`; `distanceMin` or `distanceMax` without the distance point; `distanceMin` greater than `distanceMax`; an incomplete bounding box (all 4 coordinates are required); a SW corner not at the south-west of the NE corner; `rankMin` greater than `rankMax`; `yearMin` greater than `yearMax`; `sort=distance` without the distance point; `pageSize` 0.
+The request is validated as a whole, and these are 400 errors: only one of `distanceLon` and `distanceLat`; `distanceMin` or `distanceMax` without the distance point; `distanceMin` greater than `distanceMax`; an incomplete bounding box (all 4 coordinates are required); a SW corner north of the NE corner; an invalid region (malformed, less than 3 distinct vertices, more than 200, latitudes out of range, longitudes out of the -540 to 540 range, or a longitude span of 360 or more); `rankMin` greater than `rankMax`; `yearMin` greater than `yearMax`; `sort=distance` without the distance point; `pageSize` 0.
 
 **Response**: `DataPage` of results. Each result has:
 
@@ -497,6 +499,7 @@ Notes:
 
 - words are indexed lowercase and without diacritics, and so are the values of the `=`, `<>`, `*=`, `^=`, `$=` tokens (e.g. `Epidaurós` matches `epidauros`); the values of `?=` and `%=` are just lowercased; `~=` values are used as they are.
 - punctuation is removed from tokens (except with `?=`, `~=` and `%=`), and tokens which become empty are ignored.
+- common English stopwords (e.g. `the`, `of`, `and`) and numbers are not indexed, so they are ignored in equality (`=` or no operator) tokens: e.g. `tomb of the via appia` is searched as `tomb via appia`.
 - remember to URL-encode the text in the query string (e.g. `text=%5E%3Depidaur` for `^=epidaur`).
 - attested forms (`nmatt`) are indexed in their original script, lowercase and without diacritics (e.g. `Ἀθῆναι` as `αθηναι`, so that `=αθηναι` matches it); Greek forms are also indexed in their romanized form (e.g. `athenai`).
 - for a type-ahead search, use `^=` on the last word typed.
@@ -536,9 +539,10 @@ Names and locations have a time span (from their attestations); places, and name
 #### Spatial Filters
 
 - **distance**: `distanceLon` and `distanceLat` set the distance point. With `distanceMax`, only the places within that distance from the point match; with `distanceMin`, only the places farther than that distance; with both, the places in the ring between them. Distances are measured from the representative point of each place. When the distance point is set, each result includes its `distance`, even when no distance filter is set; so the point can also be used just to sort by distance (`sort=distance`) or to show distances.
-- **bounding box**: `swCornerLon`, `swCornerLat`, `neCornerLon`, `neCornerLat` set a lon/lat rectangle, which is matched against the bounding box of each place (i.e. the box including all its locations; for places with a single point location, just that point). By default, the places whose bounding box intersects the rectangle match; with `containedInBox=true`, only the places whose bounding box is fully contained in it. A map client can pass its viewport bounds to get the places visible in the map.
+- **bounding box**: `swCornerLon`, `swCornerLat`, `neCornerLon`, `neCornerLat` set a lon/lat rectangle, which is matched against the bounding box of each place (i.e. the box including all its locations; for places with a single point location, just that point). By default, the places whose bounding box intersects the rectangle match; with `containedInBox=true`, only the places whose bounding box is fully contained in it. A map client can pass its viewport bounds to get the places visible in the map. A box crossing the antimeridian has its W edge east of its E edge, as in GeoJSON: e.g. `swCornerLon=170&neCornerLon=-170` is the 20 degrees wide box around the antimeridian.
+- **region**: `region` sets a polygon, matched against the bounding box of each place like the bounding box filter: by default, the places whose bounding box intersects it match; with `containedInRegion=true`, only the places whose bounding box is fully contained in it. As a polygon has straight edges in lon/lat coordinates, it matches what users draw on a map with the usual Web Mercator projection. Self-intersecting polygons are repaired (e.g. a bowtie becomes two triangles). For polygons crossing the antimeridian, longitudes can exceed 180 (or -180), up to 540, so that edges stay continuous: e.g. `170,10;190,10;180,20` is a triangle across it. The polygon is then split at the antimeridian.
 
-Distance and bounding box filters can be combined.
+Distance, bounding box and region filters can be combined.
 
 #### Examples
 
@@ -550,7 +554,8 @@ Distance and bounding box filters can be combined.
 | fuzzy (misspelled) name | `api/qsearch?text=%25%3Dathene` |
 | reliable names in the 4th century BC | `api/qsearch?text=athenae&scopes=nmrmz&yearMin=-400&yearMax=-301&rankMin=90` |
 | settlements or forts within 20 km from Athens, nearest first | `api/qsearch?placeType=/settlement,/fort&distanceLon=23.72&distanceLat=37.97&distanceMax=20000&sort=distance` |
-| temples in a map viewport | `api/qsearch?placeType=/temple&swCornerLon=23&swCornerLat=37.5&neCornerLon=24.2&neCornerLat=38.5&pageSize=100` |
+| temples in a map viewport (Pleiades has both `temple` and `temple-2` types) | `api/qsearch?placeType=/temple,/temple-2&swCornerLon=23&swCornerLat=37.5&neCornerLon=24.2&neCornerLat=38.5&pageSize=100` |
+| places in a triangle around Athens | `api/qsearch?region=23,37.5;24.2,37.5;23.6,38.5` |
 | places between 50 and 100 km from a point | `api/qsearch?distanceLon=12.49&distanceLat=41.89&distanceMin=50000&distanceMax=100000` |
 
 Example response for `api/qsearch?placeType=/settlement&distanceLon=23.72&distanceLat=37.97&distanceMax=5000&sort=distance&pageSize=2`:

@@ -1,5 +1,12 @@
 # History
 
+## 3.0.1
+
+- 2026-10-30:
+  - search: the bounding box can cross the antimeridian (its SW corner longitude is then greater than the NE one, as in GeoJSON), rather than being rejected. Added a polygonal `region` filter (`region`, `containedInRegion`), whose longitudes can exceed 180 to cross the antimeridian; regions are made valid, and both boxes and regions are split at the antimeridian with `ST_WrapX` when needed. Region parsing and validation are in `SpatialRegion`.
+  - search: equality tokens (`=` or no operator) which are stopwords or digits only are dropped, like when indexing. Before, any text including e.g. `of` or `the` (like a full place title) matched nothing when all the tokens were required.
+  - README: documented stopwords in the text syntax; fixed the temples example, as Pleiades has both `temple` and `temple-2` place types.
+
 ## 3.0.0
 
 - 2026-10-29:

@@ -158,7 +158,8 @@ public sealed class QuickSearchBindingModel : SpatialBindingModel
             Sort = Sort
         };
 
-        if (HasDistancePoint || HasBBox)
+        IList<SearchRequestPoint>? region = GetRegion();
+        if (HasDistancePoint || HasBBox || region != null)
         {
             request.Spatial = new QuickSearchSpatial();
 
@@ -177,6 +178,12 @@ public sealed class QuickSearchBindingModel : SpatialBindingModel
                 request.Spatial.BBoxNeCorner = new SearchRequestPoint(
                     NeCornerLon!.Value, NeCornerLat!.Value);
                 request.Spatial.IsBBoxContainer = ContainedInBox;
+            }
+
+            if (region != null)
+            {
+                request.Spatial.Region = region;
+                request.Spatial.IsRegionContainer = ContainedInRegion;
             }
         }
 

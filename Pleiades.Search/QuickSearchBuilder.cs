@@ -32,6 +32,8 @@ public sealed partial class QuickSearchBuilder
 
     private readonly QueryTextClauseBuilder _clauseBuilder;
     private readonly CompositeTextFilter _filter;
+    // the same stopwords filter used by the tokenizer when indexing
+    private readonly StopwordTextFilter _stopwordFilter;
     private readonly object _filterLock = new();
 
     /// <summary>
@@ -58,6 +60,7 @@ public sealed partial class QuickSearchBuilder
         _filter = new CompositeTextFilter(
             new WhitespaceTextFilter(),
             new StandardTextFilter());
+        _stopwordFilter = new StopwordTextFilter();
     }
 
     /// <summary>
@@ -79,7 +82,9 @@ public sealed partial class QuickSearchBuilder
     /// <summary>
     /// Parses the text tokens of the request into operator and value,
     /// filtering values as they were filtered when indexed. Tokens whose
-    /// value is empty after filtering are dropped.
+    /// value is empty after filtering are dropped. This includes the values
+    /// of equality tokens which are stopwords or digits only, as these are
+    /// not indexed, so that they could never match.
     /// </summary>
     /// <param name="text">The text.</param>
     /// <returns>Tokens.</returns>
@@ -104,7 +109,16 @@ public sealed partial class QuickSearchBuilder
                 case "^=":
                 case "$=":
                     StringBuilder sb = new(value);
-                    lock (_filterLock) _filter.Apply(sb);
+                    lock (_filterLock)
+                    {
+                        _filter.Apply(sb);
+                        if (op == "=")
+                        {
+                            string filtered = sb.ToString().Trim();
+                            sb.Clear().Append(filtered);
+                            _stopwordFilter.Apply(sb);
+                        }
+                    }
                     value = sb.ToString().Trim();
                     break;
                 case "?=":
@@ -185,19 +199,55 @@ public sealed partial class QuickSearchBuilder
         }
 
         // bounding box (lon/lat rectangle), matched against the place's
-        // bounding box
+        // bounding box. A box crossing the antimeridian has its W edge east
+        // of its E edge: its E edge is unwrapped (+360), and the box wrapped
         if (spatial.BBoxSwCorner != null && spatial.BBoxNeCorner != null)
         {
+            double w = spatial.BBoxSwCorner.Longitude;
+            double e = spatial.BBoxNeCorner.Longitude;
+            if (e < w) e += 360;
+
             string box = "ST_MakeEnvelope(" +
-                $"{where.AddParameter(spatial.BBoxSwCorner.Longitude)}, " +
+                $"{where.AddParameter(w)}, " +
                 $"{where.AddParameter(spatial.BBoxSwCorner.Latitude)}, " +
-                $"{where.AddParameter(spatial.BBoxNeCorner.Longitude)}, " +
+                $"{where.AddParameter(e)}, " +
                 $"{where.AddParameter(spatial.BBoxNeCorner.Latitude)}, 4326)";
 
-            where.Add(spatial.IsBBoxContainer
-                ? $"ST_Covers({box}, p.geo_bbx::geometry)"
-                : $"ST_Intersects(p.geo_bbx::geometry, {box})");
+            AddRegionFilter(where, e > 180 ? WrapAntimeridian(box) : box,
+                spatial.IsBBoxContainer);
         }
+
+        // polygonal region, matched against the place's bounding box. The
+        // polygon is made valid (e.g. when self-intersecting), keeping only
+        // its polygonal parts, and wrapped when crossing the antimeridian
+        if (spatial.Region?.Count >= 3)
+        {
+            string region = "ST_CollectionExtract(ST_MakeValid(" +
+                $"ST_GeomFromText({where.AddParameter(
+                    SpatialRegion.ToWkt(spatial.Region))}, 4326)), 3)";
+
+            AddRegionFilter(where,
+                SpatialRegion.NeedsWrap(spatial.Region)
+                    ? WrapAntimeridian(region) : region,
+                spatial.IsRegionContainer);
+        }
+    }
+
+    /// <summary>
+    /// Wraps a geometry whose longitudes exceed the -180/180 range around
+    /// the antimeridian, splitting it into the parts at its sides.
+    /// </summary>
+    /// <param name="geometry">The geometry SQL.</param>
+    /// <returns>SQL.</returns>
+    private static string WrapAntimeridian(string geometry) =>
+        $"ST_WrapX(ST_WrapX({geometry}, 180, -360), -180, 360)";
+
+    private static void AddRegionFilter(SqlWhereBuilder where, string region,
+        bool container)
+    {
+        where.Add(container
+            ? $"ST_Covers({region}, p.geo_bbx::geometry)"
+            : $"ST_Intersects(p.geo_bbx::geometry, {region})");
     }
 
     private static string? AddPoint(QuickSearchRequest request,

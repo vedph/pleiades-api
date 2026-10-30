@@ -34,6 +34,22 @@ public sealed class QuickSearchBuilderTest
     }
 
     [Fact]
+    public void ParseText_StopwordsAndDigitsNotIndexed_Dropped()
+    {
+        var tokens = GetBuilder().ParseText(
+            "Pyramidal tomb of The Via Appia 12 ^=the *=of");
+
+        Assert.Equal(6, tokens.Count);
+        Assert.Equal(("=", "pyramidal"), tokens[0]);
+        Assert.Equal(("=", "tomb"), tokens[1]);
+        Assert.Equal(("=", "via"), tokens[2]);
+        Assert.Equal(("=", "appia"), tokens[3]);
+        // only equality tokens are matched against whole words
+        Assert.Equal(("^=", "the"), tokens[4]);
+        Assert.Equal(("*=", "of"), tokens[5]);
+    }
+
+    [Fact]
     public void Build_TextOnly_Ok()
     {
         PagedSqlQuery query = GetBuilder().Build(new QuickSearchRequest
@@ -201,6 +217,102 @@ public sealed class QuickSearchBuilderTest
 
         Assert.Equal($"SELECT COUNT(*) FROM place p WHERE {expected};",
             Normalize(query.Count.Sql));
+    }
+
+    [Fact]
+    public void Build_BBoxCrossingAntimeridian_Wrapped()
+    {
+        PagedSqlQuery query = GetBuilder().Build(new QuickSearchRequest
+        {
+            Scopes = null,
+            Spatial = new QuickSearchSpatial
+            {
+                BBoxSwCorner = new SearchRequestPoint(170, -20),
+                BBoxNeCorner = new SearchRequestPoint(-170, -10)
+            }
+        });
+
+        Assert.Equal("SELECT COUNT(*) FROM place p WHERE " +
+            "ST_Intersects(p.geo_bbx::geometry, ST_WrapX(ST_WrapX(" +
+            "ST_MakeEnvelope(@p0, @p1, @p2, @p3, 4326), 180, -360), " +
+            "-180, 360));", Normalize(query.Count.Sql));
+        Assert.Equal(170d, query.Count.Parameters["p0"]);
+        // the E edge is unwrapped
+        Assert.Equal(190d, query.Count.Parameters["p2"]);
+    }
+
+    [Theory]
+    [InlineData(false, "ST_Intersects(p.geo_bbx::geometry, {0})")]
+    [InlineData(true, "ST_Covers({0}, p.geo_bbx::geometry)")]
+    public void Build_Region_Ok(bool container, string expected)
+    {
+        PagedSqlQuery query = GetBuilder().Build(new QuickSearchRequest
+        {
+            Scopes = null,
+            Spatial = new QuickSearchSpatial
+            {
+                Region =
+                [
+                    new SearchRequestPoint(23, 37.5),
+                    new SearchRequestPoint(24.2, 37.5),
+                    new SearchRequestPoint(23.6, 38.5)
+                ],
+                IsRegionContainer = container
+            }
+        });
+
+        const string region = "ST_CollectionExtract(ST_MakeValid(" +
+            "ST_GeomFromText(@p0, 4326)), 3)";
+        Assert.Equal("SELECT COUNT(*) FROM place p WHERE " +
+            string.Format(expected, region) + ";", Normalize(query.Count.Sql));
+        Assert.Equal("POLYGON((23 37.5,24.2 37.5,23.6 38.5,23 37.5))",
+            query.Count.Parameters["p0"]);
+    }
+
+    [Fact]
+    public void Build_RegionCrossingAntimeridian_Wrapped()
+    {
+        PagedSqlQuery query = GetBuilder().Build(new QuickSearchRequest
+        {
+            Scopes = null,
+            Spatial = new QuickSearchSpatial
+            {
+                Region =
+                [
+                    new SearchRequestPoint(170, 10),
+                    new SearchRequestPoint(190, 10),
+                    new SearchRequestPoint(180, 20)
+                ]
+            }
+        });
+
+        Assert.Contains("ST_WrapX(ST_WrapX(ST_CollectionExtract(",
+            query.Count.Sql);
+    }
+
+    [Fact]
+    public void Build_BBoxAndRegion_BothApplied()
+    {
+        PagedSqlQuery query = GetBuilder().Build(new QuickSearchRequest
+        {
+            Scopes = null,
+            Spatial = new QuickSearchSpatial
+            {
+                BBoxSwCorner = new SearchRequestPoint(20, 35),
+                BBoxNeCorner = new SearchRequestPoint(25, 40),
+                Region =
+                [
+                    new SearchRequestPoint(23, 37.5),
+                    new SearchRequestPoint(24.2, 37.5),
+                    new SearchRequestPoint(23.6, 38.5)
+                ]
+            }
+        });
+
+        string sql = Normalize(query.Count.Sql);
+        Assert.Contains("ST_MakeEnvelope(", sql);
+        Assert.Contains("ST_GeomFromText(@p4, 4326)", sql);
+        Assert.Contains(") AND (", sql);
     }
 
     [Fact]

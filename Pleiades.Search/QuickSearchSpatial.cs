@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Collections.Generic;
+using System.Text;
 
 namespace Pleiades.Search;
 
@@ -25,7 +26,9 @@ public class QuickSearchSpatial
     public SearchRequestPoint? DistancePoint { get; set; }
 
     /// <summary>
-    /// Gets or sets the bounding box SW corner.
+    /// Gets or sets the bounding box SW corner. When the box crosses the
+    /// antimeridian, its longitude is greater than the NE corner's one
+    /// (as in GeoJSON bounding boxes).
     /// </summary>
     public SearchRequestPoint? BBoxSwCorner { get; set; }
 
@@ -40,6 +43,23 @@ public class QuickSearchSpatial
     /// any part of it (which is the default behavior).
     /// </summary>
     public bool IsBBoxContainer { get; set; }
+
+    /// <summary>
+    /// Gets or sets the vertices of a polygonal region (at least 3, with
+    /// no closing vertex), in WGS84 longitude and latitude. Longitudes may
+    /// exceed the -180/180 range (up to -540/540), so that a polygon
+    /// crossing the antimeridian can be expressed with continuous
+    /// coordinates: e.g. 170 to 190 rather than 170 to -170.
+    /// See <see cref="SpatialRegion"/>.
+    /// </summary>
+    public IList<SearchRequestPoint>? Region { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the region should fully
+    /// contain the target place, rather than just intersect with any part
+    /// of it (which is the default behavior).
+    /// </summary>
+    public bool IsRegionContainer { get; set; }
 
     /// <summary>
     /// Converts to string.
@@ -63,6 +83,13 @@ public class QuickSearchSpatial
             sb.Append(BBoxSwCorner)
                 .Append(" / ").Append(BBoxNeCorner)
                 .Append(' ').Append(IsBBoxContainer ? "contains" : "intersects");
+        }
+
+        if (Region?.Count > 0)
+        {
+            if (sb.Length > 0) sb.AppendLine();
+            sb.Append("region ").Append(SpatialRegion.Format(Region))
+                .Append(' ').Append(IsRegionContainer ? "contains" : "intersects");
         }
 
         return sb.ToString();
