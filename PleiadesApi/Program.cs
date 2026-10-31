@@ -276,9 +276,12 @@ public static class Program
     private static void ConfigureAuthServices(IServiceCollection services,
         IConfiguration config)
     {
-        string csTemplate = config.GetConnectionString("Auth")!;
-        string dbName = config.GetValue<string>("DatabaseNames:Auth")!;
-        string cs = string.Format(CultureInfo.InvariantCulture, csTemplate, dbName);
+        // Auth connection string defaults to Default when not set
+        string cs = DbConnectionStrings.Build(
+            DbConnectionStrings.GetTemplate(config, "Auth"),
+            config.GetValue<string>("DatabaseNames:Auth") ?? "pleiades");
+        Log.Information("Auth database: {Database}",
+            DbConnectionStrings.Describe(cs));
         services.AddDbContext<AppDbContext>(options => options.UseNpgsql(cs));
 
         services.AddIdentity<NamedUser, IdentityRole>(options =>
@@ -308,10 +311,10 @@ public static class Program
     #endregion
 
     #region Logging
-    private static bool IsAuditEnabledFor(IConfiguration config, string key)
+    private static bool IsAuditEnabledFor(IConfiguration config, string key,
+        bool defaultValue = false)
     {
-        bool? value = config.GetValue<bool?>($"Auditing:{key}");
-        return value == true;
+        return config.GetValue<bool?>($"Auditing:{key}") ?? defaultValue;
     }
 
     private static void ConfigurePostgreLogging(HostBuilderContext context,
@@ -371,6 +374,11 @@ public static class Program
     {
         builder.Host.UseSerilog((hostingContext, loggerConfiguration) =>
         {
+            // EF logs each command as information: configuration (e.g.
+            // Serilog:MinimumLevel:Override) can override this
+            loggerConfiguration.MinimumLevel.Override(
+                "Microsoft.EntityFrameworkCore", LogEventLevel.Warning);
+
             // https://github.com/serilog/serilog-settings-configuration
             loggerConfiguration.ReadFrom.Configuration(
                 hostingContext.Configuration);
@@ -388,7 +396,10 @@ public static class Program
                 ConfigurePostgreLogging(hostingContext, loggerConfiguration);
             }
 
-            if (IsAuditEnabledFor(hostingContext.Configuration, "Console"))
+            // console is enabled unless explicitly disabled, so that the
+            // log is available via docker logs
+            if (IsAuditEnabledFor(hostingContext.Configuration, "Console",
+                true))
             {
                 Console.WriteLine("Logging to console enabled");
                 loggerConfiguration.WriteTo.Console();
@@ -436,10 +447,10 @@ public static class Program
 
         // Pleiades search: stateless and thread-safe (each call uses its own
         // pooled connection), so it is a singleton
-        services.AddSingleton<IQuickSearch>(_ => new PgSqlQuickSearch(
-            string.Format(CultureInfo.InvariantCulture,
-                config.GetConnectionString("Default")!,
-                config.GetValue<string>("DatabaseNames:Data"))));
+        string dataCs = DbConnectionStrings.Build(
+            DbConnectionStrings.GetTemplate(config, "Default"),
+            config.GetValue<string>("DatabaseNames:Data") ?? "pleiades");
+        services.AddSingleton<IQuickSearch>(_ => new PgSqlQuickSearch(dataCs));
 
         // open API
         services.AddOpenApi();

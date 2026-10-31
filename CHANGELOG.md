@@ -1,7 +1,14 @@
 # History
 
-## 3.0.1
+## 3.0.2
 
+- 2026-10-31: API database initialization:
+  - data are imported from binary table dumps (`NNNNN_table.bin`) in `Data:SourceDir` (default `/var/pleiades`) whenever the database has no places, not only when it is created, in a single transaction, so that a failed import leaves no partial data and is retried at the next start. Import errors are logged without stopping the API. PostGIS `spatial_ref_sys` is skipped (it is populated by the extension, so importing it failed on duplicate keys), non-empty target tables (like seeded accounts) are cleared before importing, the text index secondary indexes are rebuilt once at the end, and sequences are synchronized with the imported IDs.
+  - a database left without tables by a failed creation is recreated.
+  - connection strings without the `{0}` database placeholder (e.g. `...;Database=pleiades`) are accepted; `ConnectionStrings:Auth` defaults to `Default`, so that overriding `Default` alone (e.g. in Docker) is enough.
+  - log: the console sink is enabled unless `Auditing:Console` is `false` (before, the API logged nothing to `docker logs` after startup); detailed seeding log (configuration, dump files, per-table rows and times); EF commands are logged only from warning level.
+  - only transient database errors are retried, with more attempts.
+  - CLI: `pop-spatial` repairs polygons with unclosed rings from GeoJSON, which could not be restored from a binary dump.
 - 2026-10-30:
   - search: the bounding box can cross the antimeridian (its SW corner longitude is then greater than the NE one, as in GeoJSON), rather than being rejected. Added a polygonal `region` filter (`region`, `containedInRegion`), whose longitudes can exceed 180 to cross the antimeridian; regions are made valid, and both boxes and regions are split at the antimeridian with `ST_WrapX` when needed. Region parsing and validation are in `SpatialRegion`.
   - search: equality tokens (`=` or no operator) which are stopwords or digits only are dropped, like when indexing. Before, any text including e.g. `of` or `the` (like a full place title) matched nothing when all the tokens were required.

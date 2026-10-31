@@ -1,5 +1,10 @@
 <Project>
   <PropertyGroup>
-    <Version>3.0.1</Version>
+    <!-- the version of all the projects and of the Pleiades packages they
+    reference in Release (see Directory.Packages.props): bump it only here -->
+    <PleiadesVersion>3.0.2</PleiadesVersion>
+    <Version>$(PleiadesVersion)</Version>
+    <FileVersion>$(PleiadesVersion)</FileVersion>
+    <AssemblyVersion>$(PleiadesVersion)</AssemblyVersion>
   </PropertyGroup>
 </Project>

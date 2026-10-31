@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Polly;
 using System;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace PleiadesApi.Services;
@@ -15,25 +16,32 @@ namespace PleiadesApi.Services;
 /// </summary>
 public static class HostSeedExtensions
 {
-    private static Task SeedAsync(IServiceProvider serviceProvider)
+    // delays between attempts when the database service is not available
+    private static readonly TimeSpan[] _retryDelays =
+    [
+        TimeSpan.FromSeconds(10),
+        TimeSpan.FromSeconds(20),
+        TimeSpan.FromSeconds(30),
+        TimeSpan.FromSeconds(60),
+        TimeSpan.FromSeconds(60),
+        TimeSpan.FromSeconds(60)
+    ];
+
+    private static Task SeedAsync(IServiceProvider serviceProvider,
+        ILogger logger)
     {
         AppDatabaseInitializer initializer = new(serviceProvider);
-        ILogger logger = serviceProvider
-            .GetRequiredService<ILoggerFactory>()
-            .CreateLogger(typeof(HostSeedExtensions));
 
-        // retry when the database service is not yet available
-        return Policy.Handle<DbException>()
-            .WaitAndRetryAsync(
-            [
-                TimeSpan.FromSeconds(10),
-                TimeSpan.FromSeconds(30),
-                TimeSpan.FromSeconds(60)
-            ], (exception, timeSpan, _) =>
+        // retry only transient errors, like the database service not yet
+        // accepting connections; other errors (e.g. wrong credentials)
+        // would just fail again
+        return Policy.Handle<DbException>(ex => ex.IsTransient)
+            .WaitAndRetryAsync(_retryDelays, (exception, delay, attempt, _) =>
             {
-                logger.LogError(exception,
-                    "Unable to connect to DB (sleep {Delay}): {Message}",
-                    timeSpan, exception.Message);
+                logger.LogWarning(exception,
+                    "Database not available (attempt {Attempt}/{Count}), " +
+                    "retrying in {Delay}: {Message}",
+                    attempt, _retryDelays.Length + 1, delay, exception.Message);
             })
             .ExecuteAsync(initializer.SeedAsync);
     }
@@ -56,14 +64,27 @@ public static class HostSeedExtensions
             IConfiguration config =
                 serviceProvider.GetRequiredService<IConfiguration>();
 
+            logger.LogInformation("Database seeding configuration: " +
+                "data database={DataDb}, auth database={AuthDb}, " +
+                "source directory={SourceDir}, delay={Delay}s",
+                config.GetValue<string>("DatabaseNames:Data"),
+                config.GetValue<string>("DatabaseNames:Auth"),
+                config.GetValue<string>("Data:SourceDir"),
+                config.GetValue<int>("SeedDelay"));
+
             int delay = config.GetValue<int>("SeedDelay");
             if (delay > 0)
             {
-                logger.LogInformation("Waiting {Delay} seconds...", delay);
+                logger.LogInformation("Waiting {Delay} seconds before " +
+                    "seeding...", delay);
                 await Task.Delay(TimeSpan.FromSeconds(delay));
             }
 
-            await SeedAsync(serviceProvider);
+            logger.LogInformation("Seeding database...");
+            Stopwatch watch = Stopwatch.StartNew();
+            await SeedAsync(serviceProvider, logger);
+            logger.LogInformation("Database seeding completed in {Elapsed}",
+                watch.Elapsed);
             return host;
         }
         catch (Exception ex)

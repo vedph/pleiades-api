@@ -25,3 +25,19 @@ UPDATE place_feature SET geo=st_force2d(ST_GeomFromGeoJSON(geometry)) WHERE geom
 -- location
 UPDATE location SET geometry=NULL WHERE geometry='null';
 UPDATE location SET geo=st_force2d(ST_GeomFromGeoJSON(geometry)) WHERE geometry IS NOT NULL;
+
+-- GeoJSON polygons may have unclosed rings, which ST_GeomFromGeoJSON
+-- accepts while reading binary data rejects them, so that a bulk dump of
+-- these tables could not be restored: repair them
+UPDATE place_feature f SET geo=ST_MakeValid(f.geo::geometry)::geography
+WHERE EXISTS (
+	SELECT 1 FROM ST_Dump(f.geo::geometry) d, ST_DumpRings(d.geom) r
+	WHERE GeometryType(d.geom)='POLYGON'
+	AND (ST_NPoints(r.geom) < 4 OR NOT ST_IsClosed(ST_ExteriorRing(r.geom)))
+);
+UPDATE location l SET geo=ST_MakeValid(l.geo::geometry)::geography
+WHERE EXISTS (
+	SELECT 1 FROM ST_Dump(l.geo::geometry) d, ST_DumpRings(d.geom) r
+	WHERE GeometryType(d.geom)='POLYGON'
+	AND (ST_NPoints(r.geom) < 4 OR NOT ST_IsClosed(ST_ExteriorRing(r.geom)))
+);

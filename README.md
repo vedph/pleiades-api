@@ -146,7 +146,7 @@ Among other results, you will find [Epidauros](https://pleiades.stoa.org/places/
 ▶️ (7) if you want to create the binary files to be imported by the API, run the export command like:
 
 ```bash
-./pleitool export c:/users/dfusi/desktop/pleiades-bin/
+./pleitool export c:/users/dfusi/desktop/pleiades-dump/
 ```
 
 Quick reference for backup/restore:
@@ -1243,11 +1243,17 @@ docker buildx inspect --bootstrap
 This command builds for multiple platforms and pushes directly to Docker Hub:
 
 ```sh
-docker buildx build --platform linux/amd64,linux/arm64 -t vedph2020/pleiades-api:3.0.1 -t vedph2020/pleiades-api:latest --push .
+docker buildx build --platform linux/amd64,linux/arm64 -t vedph2020/pleiades-api:3.0.2 -t vedph2020/pleiades-api:latest --push .
 ```
 
-To dump data for automatic restore, e.g.:
+At startup, the API creates the database if it does not exist; then, if it has no places, it imports them from the binary table dumps (one `NNNNN_table.bin` file per table, imported in their numeric order -- use the command from `pleitool` to generate them) found in the directory set by `Data:SourceDir` (default `/var/pleiades`; environment variable `DATA__SOURCEDIR`). So, to restore data in Docker, just mount the dump directory there:
 
-```sh
-./dbtool bulk-write pleiades c:/users/dfusi/desktop/dump/ app_role,app_role_claim,app_user,app_user_claim,app_user_login,app_user_role,app_user_token,author,connection,connection_attestation,connection_author_link,connection_reference,eix_occurrence,eix_token,location,location_attestation,location_author_link,location_meta,location_reference,lookup,name,name_attestation,name_author_link,name_reference,place,place_attestation,place_author_link,place_feature,place_link,place_meta,place_reference,spatial_ref_sys
+```yml
+    environment:
+      - CONNECTIONSTRINGS__DEFAULT=User ID=postgres;Password=postgres;Host=pleiades-pgsql;Port=5432;Database={0};
+      - SEEDDELAY=60
+    volumes:
+      - ./dump:/var/pleiades
 ```
+
+The import runs in a single transaction: if it fails, the error is logged (see `docker logs pleiades-api`), the API starts without data, and the import is retried at the next start. `spatial_ref_sys` is skipped, as PostGIS populates it. ⚠️ Polygons with unclosed rings cannot be restored: if the log reports `Polygon must have closed rings`, rerun `./pleitool pop-spatial` on the source database (which repairs them) and dump again.
