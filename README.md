@@ -10,11 +10,25 @@
   - [Searching](#searching)
   - [API Reference](#api-reference)
     - [Conventions](#conventions)
+      - [Paged Results](#paged-results)
+      - [Errors](#errors)
     - [Lookup](#lookup)
     - [Quick Search](#quick-search)
+      - [Text Syntax](#text-syntax)
+      - [Scopes](#scopes)
+      - [Rank](#rank)
+      - [Years](#years)
+      - [Spatial Filters](#spatial-filters)
+      - [Examples](#examples)
     - [Place Details](#place-details)
+      - [Names](#names)
+      - [Locations](#locations)
+      - [Connections](#connections)
     - [Nearby Places](#nearby-places)
     - [Authentication and Accounts](#authentication-and-accounts)
+      - [Login](#login)
+      - [Accounts](#accounts)
+      - [Users](#users)
     - [Diagnostics](#diagnostics)
   - [CLI Tool](#cli-tool)
     - [Build Index Command](#build-index-command)
@@ -29,15 +43,23 @@
     - [Model](#model)
     - [Search](#search)
     - [JSON File](#json-file)
+  - [Docker Image](#docker-image)
 
 Thus project includes a CLI tool to import the Pleiades JSON dataset from its full-blown JSON file dump into a specially designed PostgreSQL database; a core search layer; and an API wrapper.
 
-The initial development plan is targeted to a limited set of search functions. A later stage will include more, and possibly extend to other gazetteers where required.
+A [reusable Angular library](https://github.com/vedph/cadmus-bricks-shell-v3) provides:
+
+- API services.
+- quick lookup component.
+- search component.
+
+You can play with a demo in the Cadmus bricks website:
+
+- 🚀 [DEMO](https://cadmus-bricks-v3.fusi-soft.com/geo/pleiades-query)
 
 Useful links:
 
 - <www.pleiades.stoa.org>: ancient geography, especially Greek and Roman world. Graph database, no RDBMS. No real API except for getting details from a PID.
-- <www.mapbox.com>: the Pleiades site uses MapBox. [Angular MapBox](https://medium.com/@timo.baehr/using-mapbox-in-angular-application-bc3b2b38592).
 - [Huge JSON Viewer](https://github.com/WelliSolutions/HugeJsonViewer), [Dadroit JSON Viewer](https://dadroit.com/).
 
 ## Quick Start
@@ -46,13 +68,13 @@ Useful links:
 
 The only prerequisite is having a PostgreSQL service including **PostGIS**.
 
-💡 To launch a PostgreSQL service without installing it, I prefer to use a ready-made Docker also including [PostGIS](https://postgis.net/install/). You can easily run a container like this (in this sample, I created a folder in my drive at `c:\data\pgsql` to host data outside the container):
+💡 To launch a PostgreSQL service without installing it, I prefer a ready-made Docker also including [PostGIS](https://postgis.net/install/). You can easily run a container like this (in this sample, I created a folder in my drive at `c:\data\pgsql` to host data outside the container):
 
 ```bash
 docker run --volume postgresData://c/data/pgsql -p 5432:5432 --name postgres -e POSTGRES_PASSWORD=postgres -d postgis/postgis
 ```
 
->If you already have a PostgreSQL service instance and you want to keep it unchanged, you can just change the container's name and use the same port (stopping the other instance) or a different one (in this case, update the connection string in `appsettings.json`), e.g.: `docker run --volume postgresData://c/data/pgissql -p 5432:5432 --name postgis -e POSTGRES_PASSWORD=postgres -d postgis/postgis`.
+> If you already have a PostgreSQL service instance and you want to keep it unchanged, you can just change the container's name and use the same port (stopping the other instance) or a different one (in this case, update the connection string in `appsettings.json`), e.g.: `docker run --volume postgresData://c/data/pgissql -p 5432:5432 --name postgis -e POSTGRES_PASSWORD=postgres -d postgis/postgis`.
 
 ### Procedure
 
@@ -62,7 +84,7 @@ docker run --volume postgresData://c/data/pgsql -p 5432:5432 --name postgres -e 
 pg_dump --username=postgres -f c:/users/dfusi/desktop/pleiades.sql pleiades
 ```
 
-If you do not have the pgsql client tool, you can install client tools only from the official package [setup](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads), or for Ubuntu use `sudo apt install postgresql-client`.
+> If you do not have the pgsql client tool, you can install client tools only from the official package [setup](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads), or for Ubuntu use `sudo apt install postgresql-client`.
 
 Should you want to manually create an empty database (e.g. for restoring tables into it):
 
@@ -91,11 +113,11 @@ The following procedure will create a database from scratch. You just require:
 ./pleitool import-graph c:/users/dfusi/desktop/pleiades-places.json
 ```
 
->This process will usually take some minutes, according to your hardware. This is the longest process, as it reads the huge JSON file sequentially. I've not taken care of too complex optimizations here, as I'm not going to use the full import very often (e.g. once a month). You may want to add an import limit (e.g. `-l 100`) to import only a few places and complete the procedure to check it before launching the importer for the full dataset. You can also try with dry mode first, which does not touch the database, by adding the `-p` (=preflight) option.
+> When doing a quick test, you may want to add an import limit (e.g. `-l 100`) to import only a few places and complete the procedure to check it before launching the importer for the full dataset. You can also try with dry mode first, which does not touch the database, by adding the `-p` (=preflight) option.
 
 ▶️ (4) have the Pleiades [Embix](https://github.com/vedph/embix) **profile** somewhere ready on your machine. You can find it in this repository under `pleitool/Assets`. In this example, I placed it on my Windows desktop with name `pleiades-profile.json`.
 
-▶️ (5) create the text **index** inside the database using the Embix profile:
+▶️ (5) create the text **index** inside the database using the [Embix](https://github.com/vedph/embix) profile:
 
 ```bash
 ./pleitool index c:/users/dfusi/desktop/pleiades-profile.json -c
@@ -113,7 +135,7 @@ You will find that your `pleiades` database now has two more tables: `eix_token`
 
 This completes the import procedure.
 
-FYI, the last step executes the [Spatial.pgsql](./pleitool/Assets/Spatial.pgsql) script to _populate the spatial columns_ with data parsed from the imported fields: `place.geo_pt` from the representative point, `place.geo_bbx` from the bounding box SW/NE corners (a point when they coincide), and `geo` in `place_feature` and `location` from their GeoJSON geometries. Places without a location have 0,0 as their coordinates in the dataset: their spatial columns are left NULL, and the API returns null coordinates for them. The script can be run more than once. After populating spatial data, the command also creates all the missing database indexes (see [Indexes.pgsql](./Pleiades.Ef/Assets/Indexes.pgsql)) and refreshes the database statistics, so you can also use it to upgrade databases created by previous versions.
+> The last step executes the [Spatial.pgsql](./pleitool/Assets/Spatial.pgsql) script to _populate the spatial columns_ with data parsed from the imported fields: `place.geo_pt` from the representative point, `place.geo_bbx` from the bounding box SW/NE corners (a point when they coincide), and `geo` in `place_feature` and `location` from their GeoJSON geometries. Places without a location have 0,0 as their coordinates in the dataset: their spatial columns are left NULL, and the API returns null coordinates for them. The script can be run more than once. After populating spatial data, the command also creates all the missing database indexes (see [Indexes.pgsql](./Pleiades.Ef/Assets/Indexes.pgsql)) and refreshes the database statistics, so you can also use it to upgrade databases created by previous versions.
 
 The database requires the `postgis` and `pg_trgm` extensions, which are created by the schema script.
 
@@ -134,7 +156,7 @@ LIMIT 20;
 Among other results, you will find [Epidauros](https://pleiades.stoa.org/places/570228/), like in this snapshot:
 
 | id        | title                                            | geo_pt                                        |
-|-----------|--------------------------------------------------|-----------------------------------------------|
+| --------- | ------------------------------------------------ | --------------------------------------------- |
 | 570228    | Epidauros                                        | POINT (23.16015635 37.6334625)                |
 | 570229    | Epidauros Limera                                 | POINT (23.033451 36.732711)                   |
 | 570127    | Sanctuary of Asklepios at Epidauros              | POINT (23.074264194567963 37.598302342957034) |
@@ -326,13 +348,13 @@ This section documents all the API endpoints, for clients like a frontend app. T
 
 Paged endpoints return a `DataPage` object:
 
-| property     | type    | description                                         |
-|--------------|---------|-----------------------------------------------------|
-| `pageNumber` | integer | the page number (1-N).                              |
+| property     | type    | description                                          |
+| ------------ | ------- | ---------------------------------------------------- |
+| `pageNumber` | integer | the page number (1-N).                               |
 | `pageSize`   | integer | the page size (0 when all the items were requested). |
-| `total`      | integer | the total count of the items matching the request.  |
-| `pageCount`  | integer | the total count of pages.                           |
-| `items`      | array   | the items in this page.                             |
+| `total`      | integer | the total count of the items matching the request.   |
+| `pageCount`  | integer | the total count of pages.                            |
+| `items`      | array   | the items in this page.                              |
 
 Paging parameters are `pageNumber` (1-N, default 1) and `pageSize` (default 20, maximum 100).
 
@@ -368,36 +390,36 @@ Gets a page of lookup entries. In the database, all the strings belonging to a c
 
 **Parameters** (query):
 
-| name         | type    | default | description |
-|--------------|---------|---------|-------------|
+| name         | type    | default | description                                                                                |
+| ------------ | ------- | ------- | ------------------------------------------------------------------------------------------ |
 | `prefix`     | string  |         | the prefix of the full name (case-insensitive, max 200 characters), e.g. a vocabulary URI. |
-| `shortName`  | string  |         | any part of the short name (case-insensitive, max 100 characters). |
-| `group`      | string  |         | the exact group (max 50 characters). |
-| `pageNumber` | integer | 1       | the page number. |
-| `pageSize`   | integer | 20      | the page size (0-100). Use 0 to get all the matching entries at once. |
+| `shortName`  | string  |         | any part of the short name (case-insensitive, max 100 characters).                         |
+| `group`      | string  |         | the exact group (max 50 characters).                                                       |
+| `pageNumber` | integer | 1       | the page number.                                                                           |
+| `pageSize`   | integer | 20      | the page size (0-100). Use 0 to get all the matching entries at once.                      |
 
 **Response**: `DataPage` of entries, sorted by group, full name and ID. Each entry has:
 
-| property    | type           | description |
-|-------------|----------------|-------------|
-| `id`        | integer        | the internal ID. |
-| `fullName`  | string         | the full name, usually a URI. |
+| property    | type           | description                                                         |
+| ----------- | -------------- | ------------------------------------------------------------------- |
+| `id`        | integer        | the internal ID.                                                    |
+| `fullName`  | string         | the full name, usually a URI.                                       |
 | `shortName` | string or null | the short, human-friendly name (e.g. `settlement`), when available. |
-| `group`     | string or null | the group, for non-URI values. |
+| `group`     | string or null | the group, for non-URI values.                                      |
 
 These are the most useful sets:
 
-| set | how to get it | entries |
-|-----|---------------|---------|
-| place types | `prefix=https://pleiades.stoa.org/vocabularies/place-types/&pageSize=0` | about 230 (e.g. `settlement`, `river`, `temple`) |
-| time periods | `prefix=https://pleiades.stoa.org/vocabularies/time-periods/&pageSize=0` | about 175 |
-| relationship (connection) types | `prefix=https://pleiades.stoa.org/vocabularies/relationship-types/&pageSize=0` | about 40 |
-| association certainty | `prefix=https://pleiades.stoa.org/vocabularies/association-certainty/` | `certain`, `less-certain`, `uncertain` |
-| review states | `group=state` | `drafting`, `published` |
-| name types | `group=name-type` | `geographic`, `ethnic`, `label`, ... |
-| connection certainty | `group=conn-cert` | `certain`, `less-certain`, `uncertain` |
-| transcription accuracy | `group=name-trac` | `accurate`, `inaccurate`, `false` |
-| transcription completeness | `group=name-trcp` | `complete`, `reconstructable`, `non-reconstructable` |
+| set                             | how to get it                                                                  | entries                                              |
+| ------------------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| place types                     | `prefix=https://pleiades.stoa.org/vocabularies/place-types/&pageSize=0`        | about 230 (e.g. `settlement`, `river`, `temple`)     |
+| time periods                    | `prefix=https://pleiades.stoa.org/vocabularies/time-periods/&pageSize=0`       | about 175                                            |
+| relationship (connection) types | `prefix=https://pleiades.stoa.org/vocabularies/relationship-types/&pageSize=0` | about 40                                             |
+| association certainty           | `prefix=https://pleiades.stoa.org/vocabularies/association-certainty/`         | `certain`, `less-certain`, `uncertain`               |
+| review states                   | `group=state`                                                                  | `drafting`, `published`                              |
+| name types                      | `group=name-type`                                                              | `geographic`, `ethnic`, `label`, ...                 |
+| connection certainty            | `group=conn-cert`                                                              | `certain`, `less-certain`, `uncertain`               |
+| transcription accuracy          | `group=name-trac`                                                              | `accurate`, `inaccurate`, `false`                    |
+| transcription completeness      | `group=name-trcp`                                                              | `complete`, `reconstructable`, `non-reconstructable` |
 
 Example: `GET api/lookup?prefix=https://pleiades.stoa.org/vocabularies/place-types/&shortName=sett&pageSize=0`
 
@@ -438,45 +460,45 @@ Searches places by any combination of text, place type, rank, years, distance fr
 
 **Parameters** (query):
 
-| name             | type    | default | description |
-|------------------|---------|---------|-------------|
-| `text`           | string  |         | the text to search (max 500 characters): see [text syntax](#text-syntax). |
-| `matchAny`       | boolean | `false` | true to match places matching any of the text tokens (OR), rather than all of them (AND). |
-| `scopes`         | string  | all     | the comma-separated list of the fields to search the text in: see [scopes](#scopes). Unknown scopes are a 400 error. |
-| `placeType`      | string  |         | the comma-separated list of place types to match (any of them, max 1000 characters). Each is either a full URI (e.g. `https://pleiades.stoa.org/vocabularies/place-types/settlement`), or `/` followed by its last segment (e.g. `/settlement`). Places have 0 or more types. |
-| `rankMin`        | integer | 0       | the minimum rank of the matching text occurrences (1-100, 0=not set): see [rank](#rank). |
-| `rankMax`        | integer | 0       | the maximum rank (1-100, 0=not set). |
-| `yearMin`        | integer | 0       | the minimum year (negative for BC, 0=not set): see [years](#years). |
-| `yearMax`        | integer | 0       | the maximum year (negative for BC, 0=not set). |
-| `distanceLon`    | number  |         | the longitude of the distance point (-180 to 180). |
-| `distanceLat`    | number  |         | the latitude of the distance point (-90 to 90). |
-| `distanceMin`    | integer | 0       | the minimum distance in meters from the distance point (0=not set). |
-| `distanceMax`    | integer | 0       | the maximum distance in meters from the distance point (0=not set). |
-| `swCornerLon`    | number  |         | the longitude of the bounding box SW corner. It is greater than `neCornerLon` when the box crosses the antimeridian. |
-| `swCornerLat`    | number  |         | the latitude of the bounding box SW corner. |
-| `neCornerLon`    | number  |         | the longitude of the bounding box NE corner. |
-| `neCornerLat`    | number  |         | the latitude of the bounding box NE corner. |
-| `containedInBox` | boolean | `false` | true if the place must be fully contained in the bounding box, false if it must just intersect it. |
-| `region`         | string  |         | a polygonal region, as `lon,lat` vertices separated by semicolons (3-200 vertices; the ring is closed automatically), e.g. `23,37.5;24.2,37.5;23.6,38.5`. See [spatial filters](#spatial-filters). |
-| `containedInRegion` | boolean | `false` | true if the place must be fully contained in the region, false if it must just intersect it. |
-| `sort`           | string  | `title` | the sort order: `title` (title, then ID), or `distance` (nearest first, requires the distance point). |
-| `pageNumber`     | integer | 1       | the page number. |
-| `pageSize`       | integer | 20      | the page size (1-100). |
+| name                | type    | default | description                                                                                                                                                                                                                                                                   |
+| ------------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `text`              | string  |         | the text to search (max 500 characters): see [text syntax](#text-syntax).                                                                                                                                                                                                     |
+| `matchAny`          | boolean | `false` | true to match places matching any of the text tokens (OR), rather than all of them (AND).                                                                                                                                                                                     |
+| `scopes`            | string  | all     | the comma-separated list of the fields to search the text in: see [scopes](#scopes). Unknown scopes are a 400 error.                                                                                                                                                          |
+| `placeType`         | string  |         | the comma-separated list of place types to match (any of them, max 1000 characters). Each is either a full URI (e.g. `https://pleiades.stoa.org/vocabularies/place-types/settlement`), or `/` followed by its last segment (e.g. `/settlement`). Places have 0 or more types. |
+| `rankMin`           | integer | 0       | the minimum rank of the matching text occurrences (1-100, 0=not set): see [rank](#rank).                                                                                                                                                                                      |
+| `rankMax`           | integer | 0       | the maximum rank (1-100, 0=not set).                                                                                                                                                                                                                                          |
+| `yearMin`           | integer | 0       | the minimum year (negative for BC, 0=not set): see [years](#years).                                                                                                                                                                                                           |
+| `yearMax`           | integer | 0       | the maximum year (negative for BC, 0=not set).                                                                                                                                                                                                                                |
+| `distanceLon`       | number  |         | the longitude of the distance point (-180 to 180).                                                                                                                                                                                                                            |
+| `distanceLat`       | number  |         | the latitude of the distance point (-90 to 90).                                                                                                                                                                                                                               |
+| `distanceMin`       | integer | 0       | the minimum distance in meters from the distance point (0=not set).                                                                                                                                                                                                           |
+| `distanceMax`       | integer | 0       | the maximum distance in meters from the distance point (0=not set).                                                                                                                                                                                                           |
+| `swCornerLon`       | number  |         | the longitude of the bounding box SW corner. It is greater than `neCornerLon` when the box crosses the antimeridian.                                                                                                                                                          |
+| `swCornerLat`       | number  |         | the latitude of the bounding box SW corner.                                                                                                                                                                                                                                   |
+| `neCornerLon`       | number  |         | the longitude of the bounding box NE corner.                                                                                                                                                                                                                                  |
+| `neCornerLat`       | number  |         | the latitude of the bounding box NE corner.                                                                                                                                                                                                                                   |
+| `containedInBox`    | boolean | `false` | true if the place must be fully contained in the bounding box, false if it must just intersect it.                                                                                                                                                                            |
+| `region`            | string  |         | a polygonal region, as `lon,lat` vertices separated by semicolons (3-200 vertices; the ring is closed automatically), e.g. `23,37.5;24.2,37.5;23.6,38.5`. See [spatial filters](#spatial-filters).                                                                            |
+| `containedInRegion` | boolean | `false` | true if the place must be fully contained in the region, false if it must just intersect it.                                                                                                                                                                                  |
+| `sort`              | string  | `title` | the sort order: `title` (title, then ID), or `distance` (nearest first, requires the distance point).                                                                                                                                                                         |
+| `pageNumber`        | integer | 1       | the page number.                                                                                                                                                                                                                                                              |
+| `pageSize`          | integer | 20      | the page size (1-100).                                                                                                                                                                                                                                                        |
 
 The request is validated as a whole, and these are 400 errors: only one of `distanceLon` and `distanceLat`; `distanceMin` or `distanceMax` without the distance point; `distanceMin` greater than `distanceMax`; an incomplete bounding box (all 4 coordinates are required); a SW corner north of the NE corner; an invalid region (malformed, less than 3 distinct vertices, more than 200, latitudes out of range, longitudes out of the -540 to 540 range, or a longitude span of 360 or more); `rankMin` greater than `rankMax`; `yearMin` greater than `yearMax`; `sort=distance` without the distance point; `pageSize` 0.
 
 **Response**: `DataPage` of results. Each result has:
 
-| property    | type           | description |
-|-------------|----------------|-------------|
-| `id`        | string         | the Pleiades place ID. |
+| property    | type           | description                                                                                                 |
+| ----------- | -------------- | ----------------------------------------------------------------------------------------------------------- |
+| `id`        | string         | the Pleiades place ID.                                                                                      |
 | `uriPrefix` | string         | the prefix to prepend to the ID to get the Pleiades page of the place: `https://pleiades.stoa.org/places/`. |
-| `name`      | string         | the place title. |
-| `type`      | string or null | the first place type URI, if any. |
-| `types`     | string[]       | all the place type URIs (possibly empty). |
-| `lat`       | number or null | the latitude of the place's representative point; null when the place is not located. |
-| `lng`       | number or null | the longitude of the place's representative point; null when the place is not located. |
-| `distance`  | number or null | the distance in meters from the distance point, when it was specified and the place is located; else null. |
+| `name`      | string         | the place title.                                                                                            |
+| `type`      | string or null | the first place type URI, if any.                                                                           |
+| `types`     | string[]       | all the place type URIs (possibly empty).                                                                   |
+| `lat`       | number or null | the latitude of the place's representative point; null when the place is not located.                       |
+| `lng`       | number or null | the longitude of the place's representative point; null when the place is not located.                      |
+| `distance`  | number or null | the distance in meters from the distance point, when it was specified and the place is located; else null.  |
 
 About 18% of the places (e.g. ethnic groups, or places known only from texts) are not located: they can be found by text and type, but never match spatial filters. Clients drawing maps should skip results with null coordinates.
 
@@ -484,16 +506,16 @@ About 18% of the places (e.g. ethnic groups, or places known only from texts) ar
 
 The text is made of 1 or more tokens separated by spaces. Each token is matched against the words in the selected scopes, and can be prefixed by an operator:
 
-| operator | match | example | matches e.g. |
-|----------|-------|---------|--------------|
-| (none) or `=` | equal | `athenae` | `Athenae` |
-| `<>` | not equal | `<>roma` | any word except `roma` |
-| `*=` | contains | `*=thena` | `Athenae`, `Athenaion` |
-| `^=` | starts with | `^=epidaur` | `Epidauros`, `Epidauria` |
-| `$=` | ends with | `$=polis` | `Akropolis`, `Neapolis` |
-| `?=` | wildcards: `?` = any character, `*` = any sequence of characters | `?=r?ma` | `Roma`, `Rama` |
-| `~=` | regular expression (PostgreSQL syntax, case-sensitive: words are lowercase) | `~=^ath(en\|in)` | `Athenae`, `Athina` |
-| `%=` | fuzzy (trigram similarity), optionally followed by `:` and the minimum similarity (0-1, default 0.3: higher is stricter) | `%=athene`, `%=athene:0.5` | `Athenae`, `Athena` |
+| operator      | match                                                                                                                    | example                    | matches e.g.             |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------- | ------------------------ |
+| (none) or `=` | equal                                                                                                                    | `athenae`                  | `Athenae`                |
+| `<>`          | not equal                                                                                                                | `<>roma`                   | any word except `roma`   |
+| `*=`          | contains                                                                                                                 | `*=thena`                  | `Athenae`, `Athenaion`   |
+| `^=`          | starts with                                                                                                              | `^=epidaur`                | `Epidauros`, `Epidauria` |
+| `$=`          | ends with                                                                                                                | `$=polis`                  | `Akropolis`, `Neapolis`  |
+| `?=`          | wildcards: `?` = any character, `*` = any sequence of characters                                                         | `?=r?ma`                   | `Roma`, `Rama`           |
+| `~=`          | regular expression (PostgreSQL syntax, case-sensitive: words are lowercase)                                              | `~=^ath(en\|in)`           | `Athenae`, `Athina`      |
+| `%=`          | fuzzy (trigram similarity), optionally followed by `:` and the minimum similarity (0-1, default 0.3: higher is stricter) | `%=athene`, `%=athene:0.5` | `Athenae`, `Athena`      |
 
 Notes:
 
@@ -506,15 +528,15 @@ Notes:
 
 #### Scopes
 
-| scope   | field                                | years | notes |
-|---------|--------------------------------------|-------|-------|
-| `plttl` | place title                          | no    | |
-| `pldsc` | place description                    | no    | |
-| `pldtl` | place details                        | no    | long text, may produce many matches |
-| `lcttl` | location title                       | yes   | |
-| `nmrmz` | name, romanized form                 | yes   | |
-| `nmatt` | name, attested form (original script) | yes  | Greek also romanized |
-| `nmdsc` | name description                     | yes   | |
+| scope   | field                                 | years | notes                               |
+| ------- | ------------------------------------- | ----- | ----------------------------------- |
+| `plttl` | place title                           | no    |                                     |
+| `pldsc` | place description                     | no    |                                     |
+| `pldtl` | place details                         | no    | long text, may produce many matches |
+| `lcttl` | location title                        | yes   |                                     |
+| `nmrmz` | name, romanized form                  | yes   |                                     |
+| `nmatt` | name, attested form (original script) | yes   | Greek also romanized                |
+| `nmdsc` | name description                      | yes   |                                     |
 
 For a toponym search, `plttl,nmrmz,nmatt` is usually the best choice; add `lcttl` to include location titles. Without `scopes`, all the scopes are searched, including descriptions.
 
@@ -546,17 +568,17 @@ Distance, bounding box and region filters can be combined.
 
 #### Examples
 
-| purpose | request |
-|---------|---------|
-| type-ahead on toponyms | `api/qsearch?text=%5E%3Depid&scopes=plttl,nmrmz,nmatt&pageSize=10` |
-| all the words, in any order | `api/qsearch?text=via%20appia` |
-| any of the words | `api/qsearch?text=roma%20ostia&matchAny=true` |
-| fuzzy (misspelled) name | `api/qsearch?text=%25%3Dathene` |
-| reliable names in the 4th century BC | `api/qsearch?text=athenae&scopes=nmrmz&yearMin=-400&yearMax=-301&rankMin=90` |
-| settlements or forts within 20 km from Athens, nearest first | `api/qsearch?placeType=/settlement,/fort&distanceLon=23.72&distanceLat=37.97&distanceMax=20000&sort=distance` |
+| purpose                                                                     | request                                                                                                                  |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| type-ahead on toponyms                                                      | `api/qsearch?text=%5E%3Depid&scopes=plttl,nmrmz,nmatt&pageSize=10`                                                       |
+| all the words, in any order                                                 | `api/qsearch?text=via%20appia`                                                                                           |
+| any of the words                                                            | `api/qsearch?text=roma%20ostia&matchAny=true`                                                                            |
+| fuzzy (misspelled) name                                                     | `api/qsearch?text=%25%3Dathene`                                                                                          |
+| reliable names in the 4th century BC                                        | `api/qsearch?text=athenae&scopes=nmrmz&yearMin=-400&yearMax=-301&rankMin=90`                                             |
+| settlements or forts within 20 km from Athens, nearest first                | `api/qsearch?placeType=/settlement,/fort&distanceLon=23.72&distanceLat=37.97&distanceMax=20000&sort=distance`            |
 | temples in a map viewport (Pleiades has both `temple` and `temple-2` types) | `api/qsearch?placeType=/temple,/temple-2&swCornerLon=23&swCornerLat=37.5&neCornerLon=24.2&neCornerLat=38.5&pageSize=100` |
-| places in a triangle around Athens | `api/qsearch?region=23,37.5;24.2,37.5;23.6,38.5` |
-| places between 50 and 100 km from a point | `api/qsearch?distanceLon=12.49&distanceLat=41.89&distanceMin=50000&distanceMax=100000` |
+| places in a triangle around Athens                                          | `api/qsearch?region=23,37.5;24.2,37.5;23.6,38.5`                                                                         |
+| places between 50 and 100 km from a point                                   | `api/qsearch?distanceLon=12.49&distanceLat=41.89&distanceMin=50000&distanceMax=100000`                                   |
 
 Example response for `api/qsearch?placeType=/settlement&distanceLon=23.72&distanceLat=37.97&distanceMax=5000&sort=distance&pageSize=2`:
 
@@ -605,78 +627,78 @@ Gets all the details of a place, with its names, locations (including their geom
 
 **Parameters**:
 
-| name | in   | type   | description |
-|------|------|--------|-------------|
+| name | in   | type   | description                                       |
+| ---- | ---- | ------ | ------------------------------------------------- |
 | `id` | path | string | the Pleiades place ID (e.g. `579885` for Athens). |
 
 **Response**: `200` with the place, or `404` if not found. The place has:
 
-| property              | type            | description |
-|-----------------------|-----------------|-------------|
-| `id`                  | string          | the Pleiades place ID. |
-| `uri`                 | string          | the Pleiades URI of the place. |
-| `title`               | string          | the title. |
-| `description`         | string or null  | a short description. |
-| `details`             | string or null  | longer details, as HTML. |
-| `provenance`          | string or null  | the data provenance. |
-| `rights`              | string or null  | the license. |
-| `reviewState`         | string or null  | the review state (`published`, `drafting`). |
-| `created`             | string          | the creation date. |
-| `modified`            | string          | the last modification date. |
-| `lat`                 | number or null  | the latitude of the representative point; null if not located. |
-| `lng`                 | number or null  | the longitude of the representative point; null if not located. |
-| `bbox`                | number[] or null | the bounding box as `[swLng, swLat, neLng, neLat]` (GeoJSON order); null if not located. |
-| `types`               | string[]        | the place type URIs. |
-| `subjects`            | string[]        | the subjects (keywords, e.g. `dare:major=1`). |
-| `names`               | object[]        | the [names](#names). |
-| `locations`           | object[]        | the [locations](#locations). |
-| `connections`         | object[]        | the [connections](#connections) from this place to other places. |
-| `incomingConnections` | object[]        | the [connections](#connections) from other places to this place. |
-| `linkedPlaces`        | object[]        | the places this place is linked to (Pleiades `connectsWith`), each with `id` and `title`, sorted by title. |
+| property              | type             | description                                                                                                |
+| --------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------- |
+| `id`                  | string           | the Pleiades place ID.                                                                                     |
+| `uri`                 | string           | the Pleiades URI of the place.                                                                             |
+| `title`               | string           | the title.                                                                                                 |
+| `description`         | string or null   | a short description.                                                                                       |
+| `details`             | string or null   | longer details, as HTML.                                                                                   |
+| `provenance`          | string or null   | the data provenance.                                                                                       |
+| `rights`              | string or null   | the license.                                                                                               |
+| `reviewState`         | string or null   | the review state (`published`, `drafting`).                                                                |
+| `created`             | string           | the creation date.                                                                                         |
+| `modified`            | string           | the last modification date.                                                                                |
+| `lat`                 | number or null   | the latitude of the representative point; null if not located.                                             |
+| `lng`                 | number or null   | the longitude of the representative point; null if not located.                                            |
+| `bbox`                | number[] or null | the bounding box as `[swLng, swLat, neLng, neLat]` (GeoJSON order); null if not located.                   |
+| `types`               | string[]         | the place type URIs.                                                                                       |
+| `subjects`            | string[]         | the subjects (keywords, e.g. `dare:major=1`).                                                              |
+| `names`               | object[]         | the [names](#names).                                                                                       |
+| `locations`           | object[]         | the [locations](#locations).                                                                               |
+| `connections`         | object[]         | the [connections](#connections) from this place to other places.                                           |
+| `incomingConnections` | object[]         | the [connections](#connections) from other places to this place.                                           |
+| `linkedPlaces`        | object[]         | the places this place is linked to (Pleiades `connectsWith`), each with `id` and `title`, sorted by title. |
 
 #### Names
 
-| property                    | type            | description |
-|-----------------------------|-----------------|-------------|
-| `id`                        | integer         | the internal ID. |
-| `uri`                       | string          | the Pleiades URI of the name. |
-| `romanized`                 | string          | the romanized form(s), comma-separated when more than one. |
-| `attested`                  | string or null  | the attested form, in its original script (e.g. Greek). |
-| `language`                  | string or null  | the language code (e.g. `grc`, `la`, `en`). |
-| `type`                      | string or null  | the name type (`geographic`, `ethnic`, ...). |
-| `certainty`                 | string or null  | the association certainty URI. |
-| `transcriptionAccuracy`     | string or null  | the transcription accuracy (`accurate`, `inaccurate`, `false`). |
+| property                    | type            | description                                                                            |
+| --------------------------- | --------------- | -------------------------------------------------------------------------------------- |
+| `id`                        | integer         | the internal ID.                                                                       |
+| `uri`                       | string          | the Pleiades URI of the name.                                                          |
+| `romanized`                 | string          | the romanized form(s), comma-separated when more than one.                             |
+| `attested`                  | string or null  | the attested form, in its original script (e.g. Greek).                                |
+| `language`                  | string or null  | the language code (e.g. `grc`, `la`, `en`).                                            |
+| `type`                      | string or null  | the name type (`geographic`, `ethnic`, ...).                                           |
+| `certainty`                 | string or null  | the association certainty URI.                                                         |
+| `transcriptionAccuracy`     | string or null  | the transcription accuracy (`accurate`, `inaccurate`, `false`).                        |
 | `transcriptionCompleteness` | string or null  | the transcription completeness (`complete`, `reconstructable`, `non-reconstructable`). |
-| `startYear`                 | integer or null | the start year of its time span; null if unknown. |
-| `endYear`                   | integer or null | the end year of its time span; null if unknown. |
-| `description`               | string or null  | the description. |
+| `startYear`                 | integer or null | the start year of its time span; null if unknown.                                      |
+| `endYear`                   | integer or null | the end year of its time span; null if unknown.                                        |
+| `description`               | string or null  | the description.                                                                       |
 
 #### Locations
 
-| property        | type            | description |
-|-----------------|-----------------|-------------|
-| `id`            | integer         | the internal ID. |
-| `uri`           | string          | the Pleiades URI of the location. |
-| `title`         | string          | the title. |
-| `certainty`     | string or null  | the association certainty URI. |
-| `accuracy`      | string or null  | the accuracy assessment URI. |
-| `accuracyValue` | number          | the accuracy in meters. |
-| `startYear`     | integer or null | the start year of its time span; null if unknown. |
-| `endYear`       | integer or null | the end year of its time span; null if unknown. |
-| `description`   | string or null  | the description. |
+| property        | type            | description                                                                                                                                                                                                                |
+| --------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`            | integer         | the internal ID.                                                                                                                                                                                                           |
+| `uri`           | string          | the Pleiades URI of the location.                                                                                                                                                                                          |
+| `title`         | string          | the title.                                                                                                                                                                                                                 |
+| `certainty`     | string or null  | the association certainty URI.                                                                                                                                                                                             |
+| `accuracy`      | string or null  | the accuracy assessment URI.                                                                                                                                                                                               |
+| `accuracyValue` | number          | the accuracy in meters.                                                                                                                                                                                                    |
+| `startYear`     | integer or null | the start year of its time span; null if unknown.                                                                                                                                                                          |
+| `endYear`       | integer or null | the end year of its time span; null if unknown.                                                                                                                                                                            |
+| `description`   | string or null  | the description.                                                                                                                                                                                                           |
 | `geometry`      | object or null  | the [GeoJSON geometry](https://www.rfc-editor.org/rfc/rfc7946#section-3.1) (`Point`, `LineString`, `Polygon`, `MultiLineString`, `MultiPolygon`), ready to be added to a map library as the geometry of a GeoJSON feature. |
 
 #### Connections
 
-| property     | type            | description |
-|--------------|-----------------|-------------|
-| `id`         | integer         | the internal ID. |
-| `place`      | object          | the connected place (the target for `connections`, the source for `incomingConnections`), with `id` and `title`. |
-| `type`       | string or null  | the relationship type URI (e.g. `.../relationship-types/capital`, `.../at`, `.../part_of_physical`). |
-| `certainty`  | string or null  | the certainty (`certain`, `less-certain`, `uncertain`). |
-| `title`      | string or null  | the title. |
-| `startYear`  | integer or null | the start year; null if unknown. |
-| `endYear`    | integer or null | the end year; null if unknown. |
+| property    | type            | description                                                                                                      |
+| ----------- | --------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `id`        | integer         | the internal ID.                                                                                                 |
+| `place`     | object          | the connected place (the target for `connections`, the source for `incomingConnections`), with `id` and `title`. |
+| `type`      | string or null  | the relationship type URI (e.g. `.../relationship-types/capital`, `.../at`, `.../part_of_physical`).             |
+| `certainty` | string or null  | the certainty (`certain`, `less-certain`, `uncertain`).                                                          |
+| `title`     | string or null  | the title.                                                                                                       |
+| `startYear` | integer or null | the start year; null if unknown.                                                                                 |
+| `endYear`   | integer or null | the end year; null if unknown.                                                                                   |
 
 Example for `GET api/places/570228` (rights abridged):
 
@@ -696,7 +718,11 @@ Example for `GET api/places/570228` (rights abridged):
   "lng": 23.16015635,
   "bbox": [23.160067, 37.63328, 23.1602457, 37.633645],
   "types": ["https://pleiades.stoa.org/vocabularies/place-types/settlement"],
-  "subjects": ["dare:ancient=1", "dare:major=1", "dare:feature=major settlement"],
+  "subjects": [
+    "dare:ancient=1",
+    "dare:major=1",
+    "dare:feature=major settlement"
+  ],
   "names": [
     {
       "id": 4258,
@@ -767,7 +793,10 @@ Example for `GET api/places/570228` (rights abridged):
   "incomingConnections": [
     {
       "id": 986,
-      "place": { "id": "570127", "title": "Sanctuary of Asklepios at Epidauros" },
+      "place": {
+        "id": "570127",
+        "title": "Sanctuary of Asklepios at Epidauros"
+      },
       "type": "https://pleiades.stoa.org/vocabularies/relationship-types/at",
       "certainty": "certain",
       "title": "Epidauros",
@@ -775,9 +804,7 @@ Example for `GET api/places/570228` (rights abridged):
       "endYear": null
     }
   ],
-  "linkedPlaces": [
-    { "id": "573318", "title": "Kynortion (mountain)" }
-  ]
+  "linkedPlaces": [{ "id": "573318", "title": "Kynortion (mountain)" }]
 }
 ```
 
@@ -799,11 +826,11 @@ Gets the places nearest to the specified place, nearest first, using a spatial i
 
 **Parameters**:
 
-| name        | in    | type    | default | description |
-|-------------|-------|---------|---------|-------------|
-| `id`        | path  | string  |         | the Pleiades ID of the reference place. |
-| `distance`  | query | integer | 0       | the maximum distance in meters (0-20000000, 0=any distance). |
-| `limit`     | query | integer | 20      | the maximum count of places to get (1-100). |
+| name        | in    | type    | default | description                                                                     |
+| ----------- | ----- | ------- | ------- | ------------------------------------------------------------------------------- |
+| `id`        | path  | string  |         | the Pleiades ID of the reference place.                                         |
+| `distance`  | query | integer | 0       | the maximum distance in meters (0-20000000, 0=any distance).                    |
+| `limit`     | query | integer | 20      | the maximum count of places to get (1-100).                                     |
 | `placeType` | query | string  |         | the place types to match, as for the [quick search](#quick-search) `placeType`. |
 
 **Response**: `200` with an array of results, as for the [quick search](#quick-search) (always including `distance`), excluding the reference place itself and the places which are not located; `404` if the reference place does not exist or is not located.
@@ -857,17 +884,17 @@ The token expires after `Jwt:ExpirationMinutes` (default 180). Its claims includ
 
 #### Accounts
 
-| method | route | auth | description |
-|--------|-------|------|-------------|
-| `GET` | `api/accounts/emailexists/{email}` | user | checks if an email is registered: `{"entry": "...", "isExisting": true}`. |
-| `GET` | `api/accounts/nameexists/{name}` | user | checks if a user name is registered: `{"entry": "...", "isExisting": true}`. |
-| `POST` | `api/accounts/register?confirmed=false` | admin | registers a user. Body: `{"email", "password", "name", "firstName", "lastName"}` (all required; password 6-100 characters, with uppercase and lowercase letters, a digit, and a symbol). Unless `confirmed=true`, a confirmation email is sent. Returns 400 if email or name are already registered. |
-| `GET` | `api/accounts/resendconfirm/{email}` | user (self or admin) | resends the registration confirmation email. |
-| `GET` | `api/accounts/confirm?name=...&token=...` | anonymous | confirms a registration (the target of the link in the confirmation email). Returns an HTML page. |
-| `POST` | `api/accounts/changepassword` | user (self) | changes the current user's password. Body: `{"email", "oldPassword", "newPassword", "confirmPassword"}`. |
-| `POST` | `api/accounts/resetpassword/request` | anonymous | requests a password reset, sending an email with a reset link. Body: `{"email"}`. Always returns 200, even for unknown addresses. |
-| `GET` | `api/accounts/resetpassword/apply?name=...&token=...` | anonymous | resets the password (the target of the link in the reset email), emailing a new temporary password. Returns an HTML page. |
-| `DELETE` | `api/accounts/{name}` | admin | deletes a user (not the current one). |
+| method   | route                                                 | auth                 | description                                                                                                                                                                                                                                                                                          |
+| -------- | ----------------------------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET`    | `api/accounts/emailexists/{email}`                    | user                 | checks if an email is registered: `{"entry": "...", "isExisting": true}`.                                                                                                                                                                                                                            |
+| `GET`    | `api/accounts/nameexists/{name}`                      | user                 | checks if a user name is registered: `{"entry": "...", "isExisting": true}`.                                                                                                                                                                                                                         |
+| `POST`   | `api/accounts/register?confirmed=false`               | admin                | registers a user. Body: `{"email", "password", "name", "firstName", "lastName"}` (all required; password 6-100 characters, with uppercase and lowercase letters, a digit, and a symbol). Unless `confirmed=true`, a confirmation email is sent. Returns 400 if email or name are already registered. |
+| `GET`    | `api/accounts/resendconfirm/{email}`                  | user (self or admin) | resends the registration confirmation email.                                                                                                                                                                                                                                                         |
+| `GET`    | `api/accounts/confirm?name=...&token=...`             | anonymous            | confirms a registration (the target of the link in the confirmation email). Returns an HTML page.                                                                                                                                                                                                    |
+| `POST`   | `api/accounts/changepassword`                         | user (self)          | changes the current user's password. Body: `{"email", "oldPassword", "newPassword", "confirmPassword"}`.                                                                                                                                                                                             |
+| `POST`   | `api/accounts/resetpassword/request`                  | anonymous            | requests a password reset, sending an email with a reset link. Body: `{"email"}`. Always returns 200, even for unknown addresses.                                                                                                                                                                    |
+| `GET`    | `api/accounts/resetpassword/apply?name=...&token=...` | anonymous            | resets the password (the target of the link in the reset email), emailing a new temporary password. Returns an HTML page.                                                                                                                                                                            |
+| `DELETE` | `api/accounts/{name}`                                 | admin                | deletes a user (not the current one).                                                                                                                                                                                                                                                                |
 
 Emails require the `Mailer` and `Messaging` settings; their templates are in `wwwroot/messages`.
 
@@ -875,15 +902,15 @@ Emails require the `Mailer` and `Messaging` settings; their templates are in `ww
 
 Users are returned as `{"user": {...}, "roles": [...]}`, where `user` has `id`, `userName`, `email`, `emailConfirmed`, `lockoutEnabled`, `lockoutEnd`, `firstName`, `lastName`.
 
-| method | route | auth | description |
-|--------|-------|------|-------------|
-| `GET` | `api/users?name=...&pageNumber=1&pageSize=20` | user | gets a page of users, optionally filtered by user names containing `name` (case-sensitive) (`pageNumber` and `pageSize` are required; `pageSize` 0-100, 0=all). |
-| `GET` | `api/users/{name}` | user | gets the specified user. |
-| `GET` | `api/user-info` | user | gets the current user. |
-| `GET` | `api/users-from-names?names=a,b` | user | gets the users with the specified comma-separated names. |
-| `PUT` | `api/users?confirmed=false` | admin | updates a user. Body: `{"userName", "email", "emailConfirmed", "lockoutEnabled", "lockoutEnd", "roles", "firstName", "lastName"}`. |
-| `POST` | `api/users/{name}/roles` | admin | adds the user to the roles in the body (JSON array of names), creating missing roles. |
-| `DELETE` | `api/users/{name}/roles?roles=a,b` | admin | removes the user from the specified comma-separated roles. |
+| method   | route                                         | auth  | description                                                                                                                                                     |
+| -------- | --------------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET`    | `api/users?name=...&pageNumber=1&pageSize=20` | user  | gets a page of users, optionally filtered by user names containing `name` (case-sensitive) (`pageNumber` and `pageSize` are required; `pageSize` 0-100, 0=all). |
+| `GET`    | `api/users/{name}`                            | user  | gets the specified user.                                                                                                                                        |
+| `GET`    | `api/user-info`                               | user  | gets the current user.                                                                                                                                          |
+| `GET`    | `api/users-from-names?names=a,b`              | user  | gets the users with the specified comma-separated names.                                                                                                        |
+| `PUT`    | `api/users?confirmed=false`                   | admin | updates a user. Body: `{"userName", "email", "emailConfirmed", "lockoutEnabled", "lockoutEnd", "roles", "firstName", "lastName"}`.                              |
+| `POST`   | `api/users/{name}/roles`                      | admin | adds the user to the roles in the body (JSON array of names), creating missing roles.                                                                           |
+| `DELETE` | `api/users/{name}/roles?roles=a,b`            | admin | removes the user from the specified comma-separated roles.                                                                                                      |
 
 ### Diagnostics
 
@@ -1087,27 +1114,23 @@ The indexing process is done using the Embix solution, which is a lightweight to
 The only comprehensive resource (CSV are a subset). Using a JSON viewer, I started with scanning the file looking for patterns. The essential models deduced from thie empirical scan are listed here.
 
 - `Attestation`:
-
   - timePeriod (string): `mediaeval-byzantine`
   - timePeriodURI: `https://pleiades.stoa.org/vocabularies/time-periods/mediaeval-byzantine`
   - confidence (enum string)
   - confidenceURI (`https://pleiades.stoa.org/vocabularies/attestation-confidence/confident`)
 
 - `Author`:
-
   - username (string): `jbecker`
   - homepage
   - name: `Jeffrey Becker`
   - uri: author URI like `https://pleiades.stoa.org/author/jbecker`
 
 - `EditAction`:
-
   - comment (enum string): `Edited`
   - modifiedBy (string): author username
   - modified (date)
 
 - `Feature`:
-
   - geometry (geoJSON)
   - type
   - id
@@ -1249,11 +1272,11 @@ docker buildx build --platform linux/amd64,linux/arm64 -t vedph2020/pleiades-api
 At startup, the API creates the database if it does not exist; then, if it has no places, it imports them from the binary table dumps (one `NNNNN_table.bin` file per table, imported in their numeric order -- use the command from `pleitool` to generate them) found in the directory set by `Data:SourceDir` (default `/var/pleiades`; environment variable `DATA__SOURCEDIR`). So, to restore data in Docker, just mount the dump directory there:
 
 ```yml
-    environment:
-      - CONNECTIONSTRINGS__DEFAULT=User ID=postgres;Password=postgres;Host=pleiades-pgsql;Port=5432;Database={0};
-      - SEEDDELAY=60
-    volumes:
-      - ./dump:/var/pleiades
+environment:
+  - CONNECTIONSTRINGS__DEFAULT=User ID=postgres;Password=postgres;Host=pleiades-pgsql;Port=5432;Database={0};
+  - SEEDDELAY=60
+volumes:
+  - ./dump:/var/pleiades
 ```
 
 The import runs in a single transaction: if it fails, the error is logged (see `docker logs pleiades-api`), the API starts without data, and the import is retried at the next start. `spatial_ref_sys` is skipped, as PostGIS populates it. ⚠️ Polygons with unclosed rings cannot be restored: if the log reports `Polygon must have closed rings`, rerun `./pleitool pop-spatial` on the source database (which repairs them) and dump again.
