@@ -17,7 +17,7 @@ services:
     #  - pleiades-vol:/var/lib/postgresql
 
   pleiades-api:
-    image: vedph2020/pleiades-api:3.0.1
+    image: vedph2020/pleiades-api:3.0.2
     container_name: pleiades-api
     ports:
         # https://stackoverflow.com/questions/48669548/why-does-aspnet-core-start-on-port-80-from-within-docker
@@ -26,8 +26,8 @@ services:
         - pleiades-pgsql
     environment:
         - ASPNETCORE_URLS=http://+:8080
-        - CONNECTIONSTRINGS__DEFAULT=User ID=postgres;Password=postgres;Host=localhost;Port=5432;Database=pleiades;
-        # - ALLOWED__ORIGINS__3=http://www.something.com
+        - CONNECTIONSTRINGS__DEFAULT=User ID=postgres;Password=postgres;Host=pleiades-pgsql;Port=5432;Database=pleiades;
+        # - ALLOWEDORIGINS__3=http://www.something.com
         - SEEDDELAY=30
         - SERILOG__CONNECTIONSTRING=mongodb://pleiades:27017/{0}-log
     networks:
