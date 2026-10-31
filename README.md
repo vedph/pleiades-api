@@ -53,9 +53,10 @@ A [reusable Angular library](https://github.com/vedph/cadmus-bricks-shell-v3) pr
 - quick lookup component.
 - search component.
 
-You can play with a demo in the Cadmus bricks website:
+You can play with a **demo in the Cadmus bricks website**:
 
-- 🚀 [DEMO](https://cadmus-bricks-v3.fusi-soft.com/geo/pleiades-query)
+- 🚀 [SEARCH DEMO](https://cadmus-bricks-v3.fusi-soft.com/geo/pleiades-query)
+- 🚀 [LOOKUP DEMO](https://cadmus-bricks-v3.fusi-soft.com/refs/pleiades-ref-lookup)
 
 Useful links:
 
