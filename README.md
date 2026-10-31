@@ -1245,3 +1245,9 @@ This command builds for multiple platforms and pushes directly to Docker Hub:
 ```sh
 docker buildx build --platform linux/amd64,linux/arm64 -t vedph2020/pleiades-api:3.0.1 -t vedph2020/pleiades-api:latest --push .
 ```
+
+To dump data for automatic restore, e.g.:
+
+```sh
+./dbtool bulk-write pleiades c:/users/dfusi/desktop/dump/ app_role,app_role_claim,app_user,app_user_claim,app_user_login,app_user_role,app_user_token,author,connection,connection_attestation,connection_author_link,connection_reference,eix_occurrence,eix_token,location,location_attestation,location_author_link,location_meta,location_reference,lookup,name,name_attestation,name_author_link,name_reference,place,place_attestation,place_author_link,place_feature,place_link,place_meta,place_reference,spatial_ref_sys
+```
